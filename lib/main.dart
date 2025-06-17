@@ -17,7 +17,12 @@ class MyApp extends StatelessWidget {
       ),
       routes: {
         '/home': (_) => HomePage(),
-      }
+      },
+      darkTheme: FluentThemeData(
+        brightness: Brightness.dark,
+        accentColor: Colors.blue,
+      ),
+      themeMode: ThemeMode.system,
     );
   }
 }

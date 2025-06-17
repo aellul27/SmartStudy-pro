@@ -1,4 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import '../pieces/navigation.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -6,8 +7,13 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScaffoldPage(
-      header: const PageHeader(title: Text('Home')),
-      content: const Center(child: Text('Welcome to SmartStudy!')),
+      content: Row(
+        children: [
+           const Expanded(
+            child:NavigationBar()
+          )
+        ],
+      ),
     );
   }
 }
