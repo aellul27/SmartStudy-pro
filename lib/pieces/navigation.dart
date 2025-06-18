@@ -1,5 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import '../pages/secondpage.dart';
+import '../pages/edit-timetable.dart';
 
 class NavigationBar extends StatefulWidget {
   const NavigationBar({super.key});

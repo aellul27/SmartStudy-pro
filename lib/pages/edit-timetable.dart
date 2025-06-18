@@ -9,6 +9,13 @@ class CalendarPage extends StatefulWidget {
 
 class _CalendarPageState extends State<CalendarPage> {
   late DateTime _weekStart;
+
+  // ── new state for hour‐range dropdowns ──
+  final List<String> _hourOptions =
+      List.generate(24, (h) => '${h.toString().padLeft(2, '0')}:00');
+  String? _startHour;
+  String? _endHour;
+
   // key: DateTime at hour precision, value: list of titles
   final Map<DateTime, List<String>> _events = {};
 
@@ -17,35 +24,82 @@ class _CalendarPageState extends State<CalendarPage> {
     super.initState();
     final now = DateTime.now();
     _weekStart = now.subtract(Duration(days: now.weekday - 1));
+
+    // ── init dropdowns ──
+    _startHour = _hourOptions.first;
+    _endHour = _hourOptions.last;
   }
 
   void _shiftWeek(int days) => setState(() => _weekStart = _weekStart.add(Duration(days: days)));
 
   Future<void> _addEvent(DateTime dt) async {
-    String? title;
+    // base date for the selected day
+    final titleCtrl = TextEditingController();  // ← controller for the textbox
+
+    DateTime start = dt;
+    DateTime end   = dt.add(const Duration(hours: 1));
+
     await showDialog<void>(
       context: context,
-      builder: (_) => ContentDialog(
-        title: const Text('Add event'),
-        content: TextBox(
-          placeholder: 'Event title',
-          onChanged: (v) => title = v,
-        ),
-        actions: [
-          Button(child: const Text('Cancel'), onPressed: () => Navigator.pop(context)),
-          FilledButton(
-            child: const Text('Add'),
-            onPressed: () {
-              if ((title ?? '').trim().isNotEmpty) {
-                setState(() {
-                  _events.putIfAbsent(dt, () => []).add(title!.trim());
-                });
-              }
-              Navigator.pop(context);
-            },
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (ctx, dialogSetState) => ContentDialog(
+            title: const Text('Add event'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 1) hook up the textbox to the controller
+                TextBox(
+                  controller: titleCtrl,
+                ),
+                const SizedBox(height: 12),
+                // 2) your two TimePickers still use dialogSetState
+                TimePicker(
+                  header: 'Start',
+                  selected: start,
+                  onChanged: (t) {
+                    dialogSetState(() {
+                      start = DateTime(dt.year, dt.month, dt.day, t.hour, t.minute);
+                      if (end.isBefore(start)) end = start.add(const Duration(hours: 1));
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                TimePicker(
+                  header: 'End',
+                  selected: end,
+                  onChanged: (t) {
+                    dialogSetState(() {
+                      end = DateTime(dt.year, dt.month, dt.day, t.hour, t.minute);
+                      if (end.isBefore(start)) end = start.add(const Duration(hours: 1));
+                    });
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              Button(child: const Text('Cancel'), onPressed: () => Navigator.pop(ctx)),
+              FilledButton(
+                child: const Text('Add'),
+                onPressed: () {
+                  final text = titleCtrl.text.trim();
+                  if (text.isNotEmpty) {
+                    final dur = end.difference(start).isNegative
+                        ? const Duration(hours: 1)
+                        : end.difference(start);             
+                    setState(() {
+                      _events
+                        .putIfAbsent(start, () => [])
+                        .add('$text (${DateFormat.Hm().format(start)}–${DateFormat.Hm().format(end)})');
+                    });
+                  }
+                  Navigator.pop(ctx);
+                },
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -59,8 +113,12 @@ class _CalendarPageState extends State<CalendarPage> {
   @override
   Widget build(BuildContext context) {
     final days = List.generate(7, (i) => _weekStart.add(Duration(days: i)));
-    final hourLabels = List.generate(24, (h) => '${h.toString().padLeft(2, '0')}:00');
-    final dateFmt = DateFormat('E\nMMM d');
+
+    // ── compute visible hours based on dropdowns ──
+    final startIndex = _hourOptions.indexOf(_startHour!);
+    final endIndex = _hourOptions.indexOf(_endHour!);
+    final visibleHours =
+        List.generate(endIndex - startIndex + 1, (i) => startIndex + i);
 
     return ScaffoldPage(
       header: PageHeader(
@@ -72,81 +130,133 @@ class _CalendarPageState extends State<CalendarPage> {
           '${DateFormat.yMd().format(days.first)} – ${DateFormat.yMd().format(days.last)}',
         ),
       ),
-      content: Expanded(
-        child: Scrollbar(
-          thumbVisibility: true,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: Table(
-                defaultColumnWidth: const FixedColumnWidth(100),
-                border: TableBorder.all(color: Colors.grey),
-                children: [
-                  // header row
-                  TableRow(
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── two dropdowns for start/end hour ──
+          Row(
+            children: [
+              ComboBox<String>(
+                value: _startHour,
+                items: _hourOptions
+                    .map((e) => ComboBoxItem<String>(child: Text(e), value: e))
+                    .toList(),
+                onChanged: (v) => setState(() {
+                  _startHour = v!;
+                  // if end ≤ new start, bump end to the very next hour
+                  final sIdx = _hourOptions.indexOf(_startHour!);
+                  final eIdx = _hourOptions.indexOf(_endHour!);
+                  if (eIdx <= sIdx && sIdx + 1 < _hourOptions.length) {
+                    _endHour = _hourOptions[sIdx + 1];
+                  }
+                }),
+                placeholder: const Text('Start'),
+              ),
+              const SizedBox(width: 16),
+              ComboBox<String>(
+                value: _endHour,
+                items: _hourOptions
+                    .where((e) =>
+                        _hourOptions.indexOf(e) >
+                        _hourOptions.indexOf(_startHour!))
+                    .map((e) => ComboBoxItem<String>(child: Text(e), value: e))
+                    .toList(),
+                onChanged: (v) => setState(() => _endHour = v),
+                placeholder: const Text('End'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // ── the scrollable table ──
+          Expanded(
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: Table(
+                    defaultColumnWidth: const FixedColumnWidth(100),
+                    border: TableBorder.all(color: Colors.grey),
                     children: [
-                      Container(), // top-left empty
-                      for (var d in days)
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          color: Colors.blue.lightest,
-                          child: Text(dateFmt.format(d), textAlign: TextAlign.center),
+                      // header row
+                      TableRow(
+                        children: [
+                          Container(), // top-left empty
+                          for (var d in days)
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              color: Colors.blue.lightest,
+                              child: Text(
+                                DateFormat('E\nMMM d').format(d),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                        ],
+                      ),
+                      // only loop over visible hours
+                      for (var h in visibleHours)
+                        TableRow(
+                          children: [
+                            // hour label
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              color: Colors.grey,
+                              child: Text('${h.toString().padLeft(2, '0')}:00'),
+                            ),
+                            // one cell per day
+                            for (var d in days)
+                              Button(
+                                onPressed: () {
+                                  final dt = DateTime(
+                                      d.year, d.month, d.day, h);
+                                  _addEvent(dt);
+                                },
+                                child: Container(
+                                  constraints:
+                                      const BoxConstraints(minHeight: 60),
+                                  padding: const EdgeInsets.all(4),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      ...() {
+                                        final key = DateTime(
+                                            d.year, d.month, d.day, h);
+                                        return List.generate(
+                                          _events[key]?.length ?? 0,
+                                          (i) => Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  _events[key]![i],
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(
+                                                    FluentIcons.delete),
+                                                onPressed: () =>
+                                                    _removeEvent(key, i),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }(),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                     ],
                   ),
-                  // hour rows
-                  for (int h = 0; h < 24; h++)
-                    TableRow(
-                      children: [
-                        // hour label
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          color: Colors.grey,
-                          child: Text(hourLabels[h]),
-                        ),
-                        // one cell per day
-                        for (var d in days)
-                          Button(
-                            onPressed: () {
-                              final dt = DateTime(d.year, d.month, d.day, h);
-                              _addEvent(dt);
-                            },
-                            child: Container(
-                              constraints: const BoxConstraints(minHeight: 60),
-                              padding: const EdgeInsets.all(4),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  for (int i = 0;
-                                      i < (_events[DateTime(d.year, d.month, d.day, h)]?.length ?? 0);
-                                      i++)
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            _events[DateTime(d.year, d.month, d.day, h)]![i],
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(FluentIcons.delete),
-                                          onPressed: () => _removeEvent(
-                                              DateTime(d.year, d.month, d.day, h), i),
-                                        ),
-                                      ],
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
