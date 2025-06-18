@@ -1,5 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:intl/intl.dart';
+import '../widgets/addevent.dart';
+import '../widgets/removeevent.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -33,74 +35,15 @@ class _CalendarPageState extends State<CalendarPage> {
   void _shiftWeek(int days) => setState(() => _weekStart = _weekStart.add(Duration(days: days)));
 
   Future<void> _addEvent(DateTime dt) async {
-    // base date for the selected day
-    final titleCtrl = TextEditingController();  // ← controller for the textbox
-
-    DateTime start = dt;
-    DateTime end   = dt.add(const Duration(hours: 1));
-
-    await showDialog<void>(
-      context: context,
-      builder: (_) {
-        return StatefulBuilder(
-          builder: (ctx, dialogSetState) => ContentDialog(
-            title: const Text('Add event'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 1) hook up the textbox to the controller
-                TextBox(
-                  controller: titleCtrl,
-                ),
-                const SizedBox(height: 12),
-                // 2) your two TimePickers still use dialogSetState
-                TimePicker(
-                  header: 'Start',
-                  selected: start,
-                  onChanged: (t) {
-                    dialogSetState(() {
-                      start = DateTime(dt.year, dt.month, dt.day, t.hour, t.minute);
-                      if (end.isBefore(start)) end = start.add(const Duration(hours: 1));
-                    });
-                  },
-                ),
-                const SizedBox(height: 8),
-                TimePicker(
-                  header: 'End',
-                  selected: end,
-                  onChanged: (t) {
-                    dialogSetState(() {
-                      end = DateTime(dt.year, dt.month, dt.day, t.hour, t.minute);
-                      if (end.isBefore(start)) end = start.add(const Duration(hours: 1));
-                    });
-                  },
-                ),
-              ],
-            ),
-            actions: [
-              Button(child: const Text('Cancel'), onPressed: () => Navigator.pop(ctx)),
-              FilledButton(
-                child: const Text('Add'),
-                onPressed: () {
-                  final text = titleCtrl.text.trim();
-                  if (text.isNotEmpty) {
-                    final dur = end.difference(start).isNegative
-                        ? const Duration(hours: 1)
-                        : end.difference(start);             
-                    setState(() {
-                      _events
-                        .putIfAbsent(start, () => [])
-                        .add('$text (${DateFormat.Hm().format(start)}–${DateFormat.Hm().format(end)})');
-                    });
-                  }
-                  Navigator.pop(ctx);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
+    final data = await AddEventDialog.show(context, dt);
+    if (data != null) {
+      final start = data.startTime;
+      final end = data.endTime;
+      final label = '${data.title} (${DateFormat.Hm().format(start)}–${DateFormat.Hm().format(end)})';
+      setState(() {
+        _events.putIfAbsent(start, () => []).add(label);
+      });
+    }
   }
 
   void _removeEvent(DateTime dt, int idx) {
@@ -237,8 +180,12 @@ class _CalendarPageState extends State<CalendarPage> {
                                               IconButton(
                                                 icon: const Icon(
                                                     FluentIcons.delete),
-                                                onPressed: () =>
-                                                    _removeEvent(key, i),
+                                                onPressed: () async {
+                                                  final confirmed = await RemoveEventDialog.show(context, _events[key]![i]);
+                                                  if (confirmed == true) {
+                                                    _removeEvent(key, i);
+                                                  }
+                                                },
                                               ),
                                             ],
                                           ),
