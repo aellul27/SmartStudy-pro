@@ -3,6 +3,12 @@ import 'package:intl/intl.dart';
 import '../widgets/addevent.dart';
 import '../widgets/removeevent.dart';
 
+class Event {
+  final String title;
+  final DateTime start, end;
+  Event(this.title, this.start, this.end);
+}
+
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
   @override
@@ -11,57 +17,54 @@ class CalendarPage extends StatefulWidget {
 
 class _CalendarPageState extends State<CalendarPage> {
   late DateTime _weekStart;
-
-  // ── new state for hour‐range dropdowns ──
   final List<String> _hourOptions =
       List.generate(24, (h) => '${h.toString().padLeft(2, '0')}:00');
-  String? _startHour;
-  String? _endHour;
+  String? _startHour, _endHour;
 
-  // key: DateTime at hour precision, value: list of titles
-  final Map<DateTime, List<String>> _events = {};
+  // ── now a flat list of Events ──
+  final List<Event> _events = [];
 
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
     _weekStart = now.subtract(Duration(days: now.weekday - 1));
-
-    // ── init dropdowns ──
     _startHour = _hourOptions.first;
     _endHour = _hourOptions.last;
   }
 
-  void _shiftWeek(int days) => setState(() => _weekStart = _weekStart.add(Duration(days: days)));
+  void _shiftWeek(int days) =>
+      setState(() => _weekStart = _weekStart.add(Duration(days: days)));
 
   Future<void> _addEvent(DateTime dt) async {
     final data = await AddEventDialog.show(context, dt);
     if (data != null) {
-      final start = data.startTime;
-      final end = data.endTime;
-      final label = '${data.title} (${DateFormat.Hm().format(start)}–${DateFormat.Hm().format(end)})';
       setState(() {
-        _events.putIfAbsent(start, () => []).add(label);
+        _events.add(Event(
+          data.title,
+          data.startTime,
+          data.endTime,
+        ));
       });
     }
   }
 
-  void _removeEvent(DateTime dt, int idx) {
-    setState(() {
-      _events[dt]?.removeAt(idx);
-      if (_events[dt]?.isEmpty ?? false) _events.remove(dt);
-    });
-  }
+  void _removeEvent(Event ev) =>
+      setState(() => _events.remove(ev));
 
   @override
   Widget build(BuildContext context) {
     final days = List.generate(7, (i) => _weekStart.add(Duration(days: i)));
 
-    // ── compute visible hours based on dropdowns ──
-    final startIndex = _hourOptions.indexOf(_startHour!);
-    final endIndex = _hourOptions.indexOf(_endHour!);
-    final visibleHours =
-        List.generate(endIndex - startIndex + 1, (i) => startIndex + i);
+    final sIdx = _hourOptions.indexOf(_startHour!);
+    final eIdx = _hourOptions.indexOf(_endHour!);
+    final visibleHours = List.generate(eIdx - sIdx + 1, (i) => sIdx + i);
+
+    // cell sizing
+    const cellWidth = 100.0;
+    const cellHeight = 60.0;
+    final totalWidth = cellWidth * (days.length + 1);
+    final totalHeight = cellHeight * visibleHours.length;
 
     return ScaffoldPage(
       header: PageHeader(
@@ -118,86 +121,119 @@ class _CalendarPageState extends State<CalendarPage> {
                 scrollDirection: Axis.horizontal,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.vertical,
-                  child: Table(
-                    defaultColumnWidth: const FixedColumnWidth(100),
-                    border: TableBorder.all(color: Colors.grey),
-                    children: [
-                      // header row
-                      TableRow(
-                        children: [
-                          Container(), // top-left empty
-                          for (var d in days)
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              color: Colors.blue.lightest,
-                              child: Text(
-                                DateFormat('E\nMMM d').format(d),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                        ],
-                      ),
-                      // only loop over visible hours
-                      for (var h in visibleHours)
-                        TableRow(
+                  child: SizedBox(
+                    width: totalWidth,
+                    height: totalHeight,
+                    child: Stack(
+                      children: [
+                        // 1) the grid underneath
+                        Table(
+                          defaultColumnWidth:
+                              const FixedColumnWidth(cellWidth),
+                          border: TableBorder.all(color: Colors.grey),
                           children: [
-                            // hour label
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              color: Colors.grey,
-                              child: Text('${h.toString().padLeft(2, '0')}:00'),
-                            ),
-                            // one cell per day
-                            for (var d in days)
-                              Button(
-                                onPressed: () {
-                                  final dt = DateTime(
-                                      d.year, d.month, d.day, h);
-                                  _addEvent(dt);
-                                },
-                                child: Container(
-                                  constraints:
-                                      const BoxConstraints(minHeight: 60),
+                            // header row
+                            TableRow(children: [
+                              Container(), // top-left
+                              for (var d in days)
+                                Container(
+                                  height: cellHeight,
+                                  color: Colors.blue.lightest,
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    DateFormat('E\nMMM d').format(d),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                            ]),
+                            // hour rows
+                            for (var h in visibleHours)
+                              TableRow(children: [
+                                Container(
+                                  height: cellHeight,
+                                  color: Colors.grey,
                                   padding: const EdgeInsets.all(4),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  child:
+                                      Text('${h.toString().padLeft(2, '0')}:00'),
+                                ),
+                                for (var d in days)
+                                 Button(
+                                   onPressed: () {
+                                     final dt = DateTime(
+                                         d.year, d.month, d.day, h);
+                                     _addEvent(dt);
+                                   },
+                                   style: ButtonStyle(
+                                     // remove padding so it fills the cell
+                                     padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                                     // transparent background
+                                     backgroundColor:
+                                         WidgetStatePropertyAll(Colors.transparent),
+                                   ),
+                                   child: SizedBox(
+                                     height: cellHeight,
+                                   ),
+                                 ),
+                              ]),
+                          ],
+                        ),
+
+                        // 2) overlay each event as a Positioned colored box
+                        // … inside your Stack children, replacing the old Builder/Positioned for events …
+                        for (var ev in _events)
+                          if (days.any((d) =>
+                              d.year == ev.start.year &&
+                              d.month == ev.start.month &&
+                              d.day == ev.start.day))
+                            Builder(builder: (_) {
+                              final dayIndex = days.indexWhere((d) =>
+                                  d.year == ev.start.year &&
+                                  d.month == ev.start.month &&
+                                  d.day == ev.start.day);
+
+                              // fractional start hour (e.g. 14.5 for 14:30)
+                              final startFraction =
+                                  (ev.start.hour + ev.start.minute / 60) - sIdx;
+                              // duration in hours (e.g. 0.5 for 30 min)
+                              final durationHours =
+                                  ev.end.difference(ev.start).inMinutes / 60;
+
+                              return Positioned(
+                                // move right past the time‐column + 1px border
+                                left: (dayIndex + 1) * cellWidth + 1,
+                                // move down past the header‐row + 1px border
+                                top: cellHeight + startFraction * cellHeight + 1,
+                                width: cellWidth - 2,             // avoid vertical borders
+                                height: durationHours * cellHeight - 2, // avoid horizontal borders
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withAlpha(100),
+                                    border: Border.all(color: Colors.blue, width: 1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Stack(
                                     children: [
-                                      ...() {
-                                        final key = DateTime(
-                                            d.year, d.month, d.day, h);
-                                        return List.generate(
-                                          _events[key]?.length ?? 0,
-                                          (i) => Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  _events[key]![i],
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(
-                                                    FluentIcons.delete),
-                                                onPressed: () async {
-                                                  final confirmed = await RemoveEventDialog.show(context, _events[key]![i]);
-                                                  if (confirmed == true) {
-                                                    _removeEvent(key, i);
-                                                  }
-                                                },
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      }(),
+                                      Text(ev.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+                                      Positioned(
+                                        top: 0,
+                                        right: 0,
+                                        child: IconButton(
+                                          icon: const Icon(FluentIcons.delete, size: 12),
+                                          onPressed: () async {
+                                            final confirmed =
+                                                await RemoveEventDialog.show(context, ev.title);
+                                            if (confirmed == true) _removeEvent(ev);
+                                          },
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                              ),
-                          ],
-                        ),
-                    ],
+                              );
+                            }),
+                      ],
+                    ),
                   ),
                 ),
               ),

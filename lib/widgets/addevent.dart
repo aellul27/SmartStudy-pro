@@ -13,6 +13,7 @@ class AddEventDialog {
     final titleCtrl = TextEditingController();
     DateTime start = dt;
     DateTime end = dt.add(const Duration(hours: 1));
+    String? errorText;
 
     return showDialog<AddEventData>(
       context: context,
@@ -23,17 +24,29 @@ class AddEventDialog {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextBox(controller: titleCtrl),
+                TextBox(
+                  controller: titleCtrl,
+                  placeholder: 'Title',
+                ),
+                if (errorText != null) ...[
+                  const SizedBox(height: 4),
+                  Text(errorText!,
+                      style: TextStyle(color: Colors.red)),
+                ],
                 const SizedBox(height: 12),
                 TimePicker(
                   header: 'Start',
                   selected: start,
                   onChanged: (t) {
                     dialogSetState(() {
-                      start = DateTime(dt.year, dt.month, dt.day, t.hour, t.minute);
-                      if (end.isBefore(start)) end = start.add(const Duration(hours: 1));
+                      start = DateTime(
+                          dt.year, dt.month, dt.day, t.hour, t.minute);
+                      if (end.isBefore(start)) {
+                        end = start.add(const Duration(hours: 1));
+                      }
                     });
                   },
+                  hourFormat: HourFormat.HH,
                 ),
                 const SizedBox(height: 8),
                 TimePicker(
@@ -41,15 +54,22 @@ class AddEventDialog {
                   selected: end,
                   onChanged: (t) {
                     dialogSetState(() {
-                      end = DateTime(dt.year, dt.month, dt.day, t.hour, t.minute);
-                      if (end.isBefore(start)) end = start.add(const Duration(hours: 1));
+                      end = DateTime(
+                          dt.year, dt.month, dt.day, t.hour, t.minute);
+                      if (end.isBefore(start)) {
+                        end = start.add(const Duration(hours: 1));
+                      }
                     });
                   },
+                  hourFormat: HourFormat.HH,
                 ),
               ],
             ),
             actions: [
-              Button(child: const Text('Cancel'), onPressed: () => Navigator.pop(ctx)),
+              Button(
+                child: const Text('Cancel'),
+                onPressed: () => Navigator.pop(ctx),
+              ),
               FilledButton(
                 child: const Text('Add'),
                 onPressed: () {
@@ -57,7 +77,9 @@ class AddEventDialog {
                   if (text.isNotEmpty) {
                     Navigator.pop(ctx, AddEventData(text, start, end));
                   } else {
-                    Navigator.pop(ctx);
+                    dialogSetState(() {
+                      errorText = 'Please enter a title';
+                    });
                   }
                 },
               ),
