@@ -6,7 +6,8 @@ import '../widgets/removeevent.dart';
 class Event {
   final String title;
   final DateTime start, end;
-  Event(this.title, this.start, this.end);
+  final Color color;
+  Event(this.title, this.start, this.end, this.color);
 }
 
 class CalendarPage extends StatefulWidget {
@@ -44,6 +45,7 @@ class _CalendarPageState extends State<CalendarPage> {
           data.title,
           data.startTime,
           data.endTime,
+          data.color,
         ));
       });
     }
@@ -136,13 +138,24 @@ class _CalendarPageState extends State<CalendarPage> {
                             TableRow(children: [
                               Container(), // top-left
                               for (var d in days)
-                                Container(
-                                  height: cellHeight,
-                                  color: Colors.blue.lightest,
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    DateFormat('E\nMMM d').format(d),
-                                    textAlign: TextAlign.center,
+                                Button(
+                                  onPressed: () {
+                                    // schedule at the first visible hour
+                                    final dt = DateTime(d.year, d.month, d.day, sIdx);
+                                    _addEvent(dt);
+                                  },
+                                  style: ButtonStyle(
+                                    padding: WidgetStatePropertyAll(EdgeInsets.zero),
+                                    backgroundColor: WidgetStatePropertyAll(Colors.blue.lightest),
+                                  ),
+                                  child: SizedBox(
+                                    height: cellHeight,
+                                    child: Center(
+                                      child: Text(
+                                        DateFormat('E\nMMM d').format(d),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
                                   ),
                                 ),
                             ]),
@@ -208,8 +221,8 @@ class _CalendarPageState extends State<CalendarPage> {
                                 child: Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
-                                    color: Colors.blue.withAlpha(100),
-                                    border: Border.all(color: Colors.blue, width: 1),
+                                    color: ev.color.withAlpha(100),
+                                    border: Border.all(color: ev.color, width: 1),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Stack(

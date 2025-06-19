@@ -4,8 +4,9 @@ class AddEventData {
   final String title;
   final DateTime startTime;
   final DateTime endTime;
+  final Color color;
 
-  AddEventData(this.title, this.startTime, this.endTime);
+  AddEventData(this.title, this.startTime, this.endTime, this.color);
 }
 
 class AddEventDialog {
@@ -13,6 +14,10 @@ class AddEventDialog {
     final titleCtrl = TextEditingController();
     DateTime start = dt;
     DateTime end = dt.add(const Duration(hours: 1));
+
+    Color selectedColor = Colors.blue;
+    ColorSpectrumShape spectrumShape = ColorSpectrumShape.box;
+
     String? errorText;
 
     return showDialog<AddEventData>(
@@ -21,49 +26,55 @@ class AddEventDialog {
         return StatefulBuilder(
           builder: (ctx, dialogSetState) => ContentDialog(
             title: const Text('Add event'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextBox(
-                  controller: titleCtrl,
-                  placeholder: 'Title',
-                ),
-                if (errorText != null) ...[
-                  const SizedBox(height: 4),
-                  Text(errorText!,
-                      style: TextStyle(color: Colors.red)),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextBox(
+                    controller: titleCtrl,
+                    placeholder: 'Title',
+                  ),
+                  if (errorText != null) ...[
+                    const SizedBox(height: 4),
+                    Text(errorText!, style: TextStyle(color: Colors.red)),
+                  ],
+                  const SizedBox(height: 12),
+                  ColorPicker(
+                    color: selectedColor,
+                    onChanged: (c) => dialogSetState(() => selectedColor = c),
+                    colorSpectrumShape: spectrumShape,
+                    isMoreButtonVisible: true,
+                    isColorSliderVisible: true,
+                    isColorChannelTextInputVisible: true,
+                    isHexInputVisible: true,
+                    isAlphaEnabled: false,
+                  ),
+                  const SizedBox(height: 12),
+                  TimePicker(
+                    header: 'Start',
+                    selected: start,
+                    onChanged: (t) {
+                      dialogSetState(() {
+                        start = DateTime(dt.year, dt.month, dt.day, t.hour, t.minute);
+                        if (end.isBefore(start)) end = start.add(const Duration(hours: 1));
+                      });
+                    },
+                    hourFormat: HourFormat.HH,
+                  ),
+                  const SizedBox(height: 8),
+                  TimePicker(
+                    header: 'End',
+                    selected: end,
+                    onChanged: (t) {
+                      dialogSetState(() {
+                        end = DateTime(dt.year, dt.month, dt.day, t.hour, t.minute);
+                        if (end.isBefore(start)) end = start.add(const Duration(hours: 1));
+                      });
+                    },
+                    hourFormat: HourFormat.HH,
+                  ),
                 ],
-                const SizedBox(height: 12),
-                TimePicker(
-                  header: 'Start',
-                  selected: start,
-                  onChanged: (t) {
-                    dialogSetState(() {
-                      start = DateTime(
-                          dt.year, dt.month, dt.day, t.hour, t.minute);
-                      if (end.isBefore(start)) {
-                        end = start.add(const Duration(hours: 1));
-                      }
-                    });
-                  },
-                  hourFormat: HourFormat.HH,
-                ),
-                const SizedBox(height: 8),
-                TimePicker(
-                  header: 'End',
-                  selected: end,
-                  onChanged: (t) {
-                    dialogSetState(() {
-                      end = DateTime(
-                          dt.year, dt.month, dt.day, t.hour, t.minute);
-                      if (end.isBefore(start)) {
-                        end = start.add(const Duration(hours: 1));
-                      }
-                    });
-                  },
-                  hourFormat: HourFormat.HH,
-                ),
-              ],
+              ),
             ),
             actions: [
               Button(
@@ -75,7 +86,7 @@ class AddEventDialog {
                 onPressed: () {
                   final text = titleCtrl.text.trim();
                   if (text.isNotEmpty) {
-                    Navigator.pop(ctx, AddEventData(text, start, end));
+                    Navigator.pop(ctx, AddEventData(text, start, end, selectedColor));
                   } else {
                     dialogSetState(() {
                       errorText = 'Please enter a title';
