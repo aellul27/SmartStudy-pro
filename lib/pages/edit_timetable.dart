@@ -6,8 +6,40 @@ import '../widgets/removeevent.dart';
 class Event {
   final String title;
   final DateTime start, end;
+  final String eventType;
   final Color color;
-  Event(this.title, this.start, this.end, this.color);
+  Event(this.title, this.eventType, this.start, this.end, this.color);
+}
+class StudyCrossPainter extends CustomPainter {
+final Color color;
+const StudyCrossPainter({required this.color});
+
+@override
+void paint(Canvas canvas, Size size) {
+  final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.2;
+    const step = 6.0;
+    // ↘ lines
+    for (double i = -size.height; i < size.width; i += step) {
+      canvas.drawLine(
+        Offset(i, 0),
+        Offset(i + size.height, size.height),
+        paint,
+      );
+    }
+    // ↙ lines
+    for (double i = 0; i < size.width + size.height; i += step) {
+      canvas.drawLine(
+        Offset(i, 0),
+        Offset(i - size.height, size.height),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
 }
 
 class CalendarPage extends StatefulWidget {
@@ -43,6 +75,7 @@ class _CalendarPageState extends State<CalendarPage> {
       setState(() {
         _events.add(Event(
           data.title,
+          data.eventType,
           data.startTime,
           data.endTime,
           data.color,
@@ -157,7 +190,7 @@ class _CalendarPageState extends State<CalendarPage> {
                                       ),
                                     ),
                                   ),
-                                ),
+                                ),  
                             ]),
                             // hour rows
                             for (var h in visibleHours)
@@ -192,7 +225,7 @@ class _CalendarPageState extends State<CalendarPage> {
                         ),
 
                         // 2) overlay each event as a Positioned colored box
-                        // … inside your Stack children, replacing the old Builder/Positioned for events …
+                        // … inside your for (var ev in _events) Positioned( … ) …
                         for (var ev in _events)
                           if (days.any((d) =>
                               d.year == ev.start.year &&
@@ -218,33 +251,54 @@ class _CalendarPageState extends State<CalendarPage> {
                                 top: cellHeight + startFraction * cellHeight + 1,
                                 width: cellWidth - 2,             // avoid vertical borders
                                 height: durationHours * cellHeight - 2, // avoid horizontal borders
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    color: ev.color.withAlpha(100),
-                                    border: Border.all(color: ev.color, width: 1),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Stack(
-                                    children: [
-                                      Text(ev.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-                                      Positioned(
-                                        top: 0,
-                                        right: 0,
-                                        child: IconButton(
-                                          icon: const Icon(FluentIcons.delete, size: 12),
-                                          onPressed: () async {
-                                            final confirmed =
-                                                await RemoveEventDialog.show(context, ev.title);
-                                            if (confirmed == true) _removeEvent(ev);
-                                          },
+                                child: ClipRRect(                              // <<< wrap in ClipRRect
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: ev.color.withAlpha(100),
+                                      border: Border.all(color: ev.color, width: 1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Stack(
+                                      clipBehavior: Clip.hardEdge,            // <<< still good to double‐clip
+                                      children: [
+                                        if (ev.eventType == 'Study time')
+                                          Positioned.fill(
+                                            child: CustomPaint(
+                                              painter: StudyCrossPainter(
+                                                color: ev.color.withAlpha(100), // you can bump alpha if needed
+                                              ),
+                                            ),
+                                          ),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                  IconButton(
+                                                  icon: const Icon(FluentIcons.delete, size: 12),
+                                                  onPressed: () async {
+                                                    final confirmed = await RemoveEventDialog.show(
+                                                        context, ev.title);
+                                                    if (confirmed == true) _removeEvent(ev);
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(ev.title,
+                                                overflow: TextOverflow.ellipsis),
+                                          ],
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );
-                            }),
+                            }
+                          ),
                       ],
                     ),
                   ),

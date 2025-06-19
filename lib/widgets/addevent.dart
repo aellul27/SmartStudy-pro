@@ -2,11 +2,12 @@ import 'package:fluent_ui/fluent_ui.dart';
 
 class AddEventData {
   final String title;
+  final String eventType;
   final DateTime startTime;
   final DateTime endTime;
   final Color color;
 
-  AddEventData(this.title, this.startTime, this.endTime, this.color);
+  AddEventData(this.title, this.eventType, this.startTime, this.endTime, this.color);
 }
 
 class AddEventDialog {
@@ -17,6 +18,8 @@ class AddEventDialog {
 
     Color selectedColor = Colors.blue;
     ColorSpectrumShape spectrumShape = ColorSpectrumShape.box;
+    
+    String? eventType = "Unavaliable";
 
     String? errorText;
 
@@ -38,6 +41,21 @@ class AddEventDialog {
                     const SizedBox(height: 4),
                     Text(errorText!, style: TextStyle(color: Colors.red)),
                   ],
+                  const SizedBox(height: 12),
+                  ComboBox(
+                    value: eventType,
+                    items: [
+                      ComboBoxItem<String>(
+                        child: Text("Unavaliable"),
+                        value: "Unavaliable",
+                      ),
+                      ComboBoxItem<String>(
+                        child: Text("Study time"),
+                        value: "Study time",
+                      ),
+                    ],
+                    onChanged: (c) => dialogSetState(() => eventType = c),
+                  ),
                   const SizedBox(height: 12),
                   ColorPicker(
                     color: selectedColor,
@@ -86,7 +104,7 @@ class AddEventDialog {
                 onPressed: () {
                   final text = titleCtrl.text.trim();
                   if (text.isNotEmpty) {
-                    Navigator.pop(ctx, AddEventData(text, start, end, selectedColor));
+                    Navigator.pop(ctx, AddEventData(text, eventType ?? "Unavaliable", start, end, selectedColor));
                   } else {
                     dialogSetState(() {
                       errorText = 'Please enter a title';
