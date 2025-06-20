@@ -2,14 +2,21 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:intl/intl.dart';
 import '../widgets/addevent.dart';
 import '../widgets/removeevent.dart';
+import '../database/add_events.dart';
+import '../database/get_events.dart';
+import '../database/remove_events.dart';
+import '../database/update_events.dart';
 
 class Event {
+  // Include the DB id so we can remove/update
+  final int id;
   final String title;
-  final DateTime start, end;
   final String eventType;
+  final DateTime start, end;
   final Color color;
-  Event(this.title, this.eventType, this.start, this.end, this.color);
+  Event(this.id, this.title, this.eventType, this.start, this.end, this.color);
 }
+
 class StudyCrossPainter extends CustomPainter {
 final Color color;
 const StudyCrossPainter({required this.color});
@@ -61,9 +68,38 @@ class _CalendarPageState extends State<CalendarPage> {
   void initState() {
     super.initState();
     final now = DateTime.now();
+    // ISO week starts Monday
     _weekStart = now.subtract(Duration(days: now.weekday - 1));
+    _loadWeek();
     _startHour = _hourOptions.first;
     _endHour = _hourOptions.last;
+  }
+
+  Future<void> _loadWeek() async {
+    final items = await getAllEventsWeek(weekSearch: _weekStart);
+    setState(() {
+      _events
+        ..clear()
+        ..addAll(items
+          .where((e) => e.startTime != null && e.endTime != null)
+          .map((e) => Event(
+            e.id,
+            e.title,
+            e.eventType,
+            e.startTime!,
+            e.endTime!,
+            _parseColor(e.color),
+          ))
+        )
+      ;
+    });
+  }
+
+  // hex "#RRGGBB" or "#AARRGGBB"
+  Color _parseColor(String hex) {
+    var h = hex.replaceFirst('#', '');
+    if (h.length == 6) h = 'FF$h';
+    return Color(int.parse(h, radix: 16));
   }
 
   void _shiftWeek(int days) =>
@@ -72,20 +108,24 @@ class _CalendarPageState extends State<CalendarPage> {
   Future<void> _addEvent(DateTime dt) async {
     final data = await AddEventDialog.show(context, dt);
     if (data != null) {
-      setState(() {
-        _events.add(Event(
-          data.title,
-          data.eventType,
-          data.startTime,
-          data.endTime,
-          data.color,
-        ));
-      });
+      await addEvent(
+        title: data.title,
+        eventType: data.eventType,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        color: '#${data.color.toARGB32().toRadixString(16).padLeft(8, '0')}',
+      );
+      await _loadWeek();
     }
   }
 
-  void _removeEvent(Event ev) =>
-      setState(() => _events.remove(ev));
+  Future<void> _removeEvent(Event ev) async {
+    final confirmed = await RemoveEventDialog.show(context, ev.title);
+    if (confirmed == true) {
+      await removeEvent(id: ev.id);
+      await _loadWeek();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +146,7 @@ class _CalendarPageState extends State<CalendarPage> {
         leading: Row(children: [
           IconButton(icon: const Icon(FluentIcons.chevron_left), onPressed: () => _shiftWeek(-7)),
           IconButton(icon: const Icon(FluentIcons.chevron_right), onPressed: () => _shiftWeek(7)),
+          IconButton(icon: const Icon(FluentIcons.calculator_multiply), onPressed: () => DoNothingAction),
         ]),
         title: Text(
           '${DateFormat.yMd().format(days.first)} – ${DateFormat.yMd().format(days.last)}',
@@ -120,7 +161,7 @@ class _CalendarPageState extends State<CalendarPage> {
               ComboBox<String>(
                 value: _startHour,
                 items: _hourOptions
-                    .map((e) => ComboBoxItem<String>(child: Text(e), value: e))
+                    .map((e) => ComboBoxItem<String>(value: e, child: Text(e)))
                     .toList(),
                 onChanged: (v) => setState(() {
                   _startHour = v!;
@@ -140,7 +181,7 @@ class _CalendarPageState extends State<CalendarPage> {
                     .where((e) =>
                         _hourOptions.indexOf(e) >
                         _hourOptions.indexOf(_startHour!))
-                    .map((e) => ComboBoxItem<String>(child: Text(e), value: e))
+                    .map((e) => ComboBoxItem<String>(value: e, child: Text(e)))
                     .toList(),
                 onChanged: (v) => setState(() => _endHour = v),
                 placeholder: const Text('End'),
@@ -237,10 +278,8 @@ class _CalendarPageState extends State<CalendarPage> {
                                   d.month == ev.start.month &&
                                   d.day == ev.start.day);
 
-                              // fractional start hour (e.g. 14.5 for 14:30)
                               final startFraction =
                                   (ev.start.hour + ev.start.minute / 60) - sIdx;
-                              // duration in hours (e.g. 0.5 for 30 min)
                               final durationHours =
                                   ev.end.difference(ev.start).inMinutes / 60;
 
@@ -261,7 +300,6 @@ class _CalendarPageState extends State<CalendarPage> {
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Stack(
-                                      clipBehavior: Clip.hardEdge,            // <<< still good to double‐clip
                                       children: [
                                         if (ev.eventType == 'Study time')
                                           Positioned.fill(
@@ -280,19 +318,18 @@ class _CalendarPageState extends State<CalendarPage> {
                                                   IconButton(
                                                   icon: const Icon(FluentIcons.delete, size: 12),
                                                   onPressed: () async {
-                                                    final confirmed = await RemoveEventDialog.show(
-                                                        context, ev.title);
-                                                    if (confirmed == true) _removeEvent(ev);
+                                                    await _removeEvent(ev);
                                                   },
-                                                ),
+                                                ),  
                                               ],
-                                            ),
+                                             ),
+                                           
                                             const SizedBox(height: 2),
                                             Text(ev.title,
                                                 overflow: TextOverflow.ellipsis),
                                           ],
-                                        ),
-                                      ],
+                                       ),
+                                      ]
                                     ),
                                   ),
                                 ),

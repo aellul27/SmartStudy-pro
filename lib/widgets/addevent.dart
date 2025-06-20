@@ -46,12 +46,12 @@ class AddEventDialog {
                     value: eventType,
                     items: [
                       ComboBoxItem<String>(
-                        child: Text("Unavaliable"),
                         value: "Unavaliable",
+                        child: Text("Unavaliable"),
                       ),
                       ComboBoxItem<String>(
-                        child: Text("Study time"),
                         value: "Study time",
+                        child: Text("Study time"),
                       ),
                     ],
                     onChanged: (c) => dialogSetState(() => eventType = c),
