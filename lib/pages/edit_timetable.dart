@@ -285,7 +285,7 @@ class _CalendarPageState extends State<CalendarPage> {
                         ),
 
                         // 2) overlay each event as a Positioned colored box
-                        // … inside your for (var ev in _events) Positioned( … ) …
+                        // … inside your for (var ev in _events) Builder(builder: (_) { … }) …
                         for (var ev in _events)
                           if (days.any((d) =>
                               d.year == ev.start.year &&
@@ -302,13 +302,28 @@ class _CalendarPageState extends State<CalendarPage> {
                               final durationHours =
                                   ev.end.difference(ev.start).inMinutes / 60;
 
+                              // compute raw top/bottom relative to the header row
+                              final headerBottom = cellHeight + 1; // header height + 1px border
+                              final slotHeight = cellHeight + 2;   // cell + 2px border
+                              final rawTop = cellHeight + startFraction * slotHeight;
+                              final rawBottom = rawTop + durationHours * slotHeight - 2;
+
+                              // if the entire box is above the header → don’t draw
+                              if (rawBottom <= headerBottom) return const SizedBox.shrink();
+
+                              // clamp to visible area
+                              final top = rawTop < headerBottom ? headerBottom : rawTop;
+                              final bottomLimit = headerBottom + visibleHours.length * slotHeight - 2;
+                              final bottom = rawBottom > bottomLimit ? bottomLimit : rawBottom;
+                              final height = bottom - top;
+
                               return Positioned(
                                 // move right past the time‐column + 1px border
                                 left: (dayIndex + 1) * cellWidth + 1,
                                 // move down past the header‐row + 1px border
-                                top: cellHeight + startFraction * (cellHeight + 2),
-                                width: cellWidth - 2,             // avoid vertical borders
-                                height: durationHours * cellHeight - 2, // avoid horizontal borders
+                                top: top,
+                                width: cellWidth - 2,
+                                height: height,
                                 child: GestureDetector(
                                   onTap: () => _updateEvent(ev),
                                   child: ClipRRect(
