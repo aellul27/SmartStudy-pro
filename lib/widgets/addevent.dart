@@ -19,7 +19,7 @@ class AddEventDialog {
     Color selectedColor = Colors.blue;
     ColorSpectrumShape spectrumShape = ColorSpectrumShape.box;
     
-    String? eventType = "Unavaliable";
+    String eventType = "Unavailable";
 
     String? errorText;
 
@@ -46,15 +46,15 @@ class AddEventDialog {
                     value: eventType,
                     items: [
                       ComboBoxItem<String>(
-                        value: "Unavaliable",
-                        child: Text("Unavaliable"),
+                        value: "Unavailable",
+                        child: Text("Unavailable"),
                       ),
                       ComboBoxItem<String>(
                         value: "Study time",
                         child: Text("Study time"),
                       ),
                     ],
-                    onChanged: (c) => dialogSetState(() => eventType = c),
+                    onChanged: (c) => dialogSetState(() => eventType = c ?? "Unavailable"),
                   ),
                   const SizedBox(height: 12),
                   ColorPicker(
@@ -104,7 +104,7 @@ class AddEventDialog {
                 onPressed: () {
                   final text = titleCtrl.text.trim();
                   if (text.isNotEmpty) {
-                    Navigator.pop(ctx, AddEventData(text, eventType ?? "Unavaliable", start, end, selectedColor));
+                    Navigator.pop(ctx, AddEventData(text, eventType, start, end, selectedColor));
                   } else {
                     dialogSetState(() {
                       errorText = 'Please enter a title';

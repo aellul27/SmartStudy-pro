@@ -19,8 +19,7 @@ class UpdateEventDialog {
     DateTime end = event.endTime;
     Color selectedColor = event.color;
     ColorSpectrumShape spectrumShape = ColorSpectrumShape.box;
-    String? eventType = event.eventType;
-
+    String eventType = event.eventType;
     String? errorText;
 
     return showDialog<UpdateEventData>(
@@ -54,7 +53,7 @@ class UpdateEventDialog {
                         child: Text("Study time"),
                       ),
                     ],
-                    onChanged: (c) => dialogSetState(() => eventType = c),
+                    onChanged: (c) => dialogSetState(() => eventType = c ?? "Unavailable"),
                   ),
                   const SizedBox(height: 12),
                   ColorPicker(
@@ -104,7 +103,7 @@ class UpdateEventDialog {
                 onPressed: () {
                   final text = titleCtrl.text.trim();
                   if (text.isNotEmpty) {
-                    Navigator.pop(ctx, UpdateEventData(id, text, eventType ?? "Unavailable", start, end, selectedColor));
+                    Navigator.pop(ctx, UpdateEventData(id, text, eventType, start, end, selectedColor));
                   } else {
                     dialogSetState(() {
                       errorText = 'Please enter a title';

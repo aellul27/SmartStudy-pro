@@ -6,8 +6,8 @@ import 'package:drift/drift.dart';
 Future<void> addEvent({
   required String title,
   required String eventType,
-  DateTime? startTime,
-  DateTime? endTime,
+  required DateTime startTime,
+  required DateTime endTime,
   required String color,
 }) async {
   // ensure Flutter bindings are ready
@@ -18,7 +18,6 @@ Future<void> addEvent({
     EventItemsCompanion.insert(
       title: title,
       eventType: eventType,
-      // wrap nullable values in Value(...)
       startTime: Value(startTime),
       endTime:   Value(endTime),
       color: color,
