@@ -2,6 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:intl/intl.dart';
 import '../widgets/addevent.dart';
 import '../widgets/removeevent.dart';
+import '../widgets/updateevent.dart';
 import '../database/add_events.dart';
 import '../database/get_events.dart';
 import '../database/remove_events.dart';
@@ -123,6 +124,24 @@ class _CalendarPageState extends State<CalendarPage> {
     final confirmed = await RemoveEventDialog.show(context, ev.title);
     if (confirmed == true) {
       await removeEvent(id: ev.id);
+      await _loadWeek();
+    }
+  }
+
+  Future<void> _updateEvent(Event ev) async {
+    final data = await UpdateEventDialog.show(
+      context,
+      UpdateEventData(ev.id, ev.title, ev.eventType, ev.start, ev.end, ev.color),
+    );
+    if (data != null) {
+      await updateEvent(
+        id: data.id,
+        title: data.title,
+        eventType: data.eventType,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        color: '#${data.color.toARGB32().toRadixString(16).padLeft(8, '0')}',
+      );
       await _loadWeek();
     }
   }
@@ -290,49 +309,52 @@ class _CalendarPageState extends State<CalendarPage> {
                                 top: cellHeight + startFraction * (cellHeight + 2),
                                 width: cellWidth - 2,             // avoid vertical borders
                                 height: durationHours * cellHeight - 2, // avoid horizontal borders
-                                child: ClipRRect(                              // <<< wrap in ClipRRect
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: ev.color.withAlpha(100),
-                                      border: Border.all(color: ev.color, width: 1),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Stack(
-                                      children: [
-                                        if (ev.eventType == 'Study time')
-                                          Positioned.fill(
-                                            child: CustomPaint(
-                                              painter: StudyCrossPainter(
-                                                color: ev.color.withAlpha(100), // you can bump alpha if needed
+                                child: GestureDetector(
+                                  onTap: () => _updateEvent(ev),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: ev.color.withAlpha(100),
+                                        border: Border.all(color: ev.color, width: 1),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Stack(
+                                        children: [
+                                          if (ev.eventType == 'Study time')
+                                            Positioned.fill(
+                                              child: CustomPaint(
+                                                painter: StudyCrossPainter(
+                                                  color: ev.color.withAlpha(100), // you can bump alpha if needed
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                              children: [
-                                                  IconButton(
-                                                  icon: const Icon(FluentIcons.delete, size: 12),
-                                                  onPressed: () async {
-                                                    await _removeEvent(ev);
-                                                  },
-                                                ),  
-                                              ],
-                                             ),
-                                           
-                                            const SizedBox(height: 2),
-                                            Text(ev.title,
-                                                overflow: TextOverflow.ellipsis),
-                                          ],
-                                       ),
-                                      ]
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                    IconButton(
+                                                    icon: const Icon(FluentIcons.delete, size: 12),
+                                                    onPressed: () async {
+                                                      await _removeEvent(ev);
+                                                    },
+                                                  ),  
+                                                ],
+                                               ),
+                                             
+                                              const SizedBox(height: 2),
+                                              Text(ev.title,
+                                                  overflow: TextOverflow.ellipsis),
+                                            ],
+                                         ),
+                                        ]
+                                      ),
                                     ),
                                   ),
-                                ),
+                                )
                               );
                             }
                           ),
