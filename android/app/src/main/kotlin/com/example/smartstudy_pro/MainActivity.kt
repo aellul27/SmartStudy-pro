@@ -1,4 +1,4 @@
-package com.example.smartstudy_pro
+package com.smartstudy.smartstudy_pro
 
 import io.flutter.embedding.android.FlutterActivity
 

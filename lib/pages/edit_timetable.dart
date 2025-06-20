@@ -139,7 +139,7 @@ class _CalendarPageState extends State<CalendarPage> {
     const cellWidth = 100.0;
     const cellHeight = 60.0;
     final totalWidth = cellWidth * (days.length + 1);
-    final totalHeight = cellHeight * visibleHours.length;
+    final totalHeight = (cellHeight + 2) * visibleHours.length;
 
     return ScaffoldPage(
       header: PageHeader(
@@ -149,7 +149,7 @@ class _CalendarPageState extends State<CalendarPage> {
           IconButton(icon: const Icon(FluentIcons.calculator_multiply), onPressed: () => DoNothingAction),
         ]),
         title: Text(
-          '${DateFormat.yMd().format(days.first)} – ${DateFormat.yMd().format(days.last)}',
+          '${DateFormat('d/M/y').format(days.first)} – ${DateFormat('d/M/y').format(days.last)}',
         ),
       ),
       content: Column(
@@ -287,7 +287,7 @@ class _CalendarPageState extends State<CalendarPage> {
                                 // move right past the time‐column + 1px border
                                 left: (dayIndex + 1) * cellWidth + 1,
                                 // move down past the header‐row + 1px border
-                                top: cellHeight + startFraction * cellHeight + 1,
+                                top: cellHeight + startFraction * (cellHeight + 2),
                                 width: cellWidth - 2,             // avoid vertical borders
                                 height: durationHours * cellHeight - 2, // avoid horizontal borders
                                 child: ClipRRect(                              // <<< wrap in ClipRRect
