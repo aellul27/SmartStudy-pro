@@ -1,4 +1,4 @@
-import 'database.dart';
+import '../database.dart';
 import 'package:flutter/widgets.dart';
 import 'package:drift/drift.dart';
 

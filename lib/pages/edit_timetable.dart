@@ -3,10 +3,10 @@ import 'package:intl/intl.dart';
 import '../widgets/addevent.dart';
 import '../widgets/removeevent.dart';
 import '../widgets/updateevent.dart';
-import '../database/add_events.dart';
-import '../database/get_events.dart';
-import '../database/remove_events.dart';
-import '../database/update_events.dart';
+import '../database/events/add_events.dart';
+import '../database/events/get_events.dart';
+import '../database/events/remove_events.dart';
+import '../database/events/update_events.dart';
 
 class Event {
   // Include the DB id so we can remove/update
