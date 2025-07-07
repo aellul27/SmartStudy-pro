@@ -1,4 +1,4 @@
-import 'database.dart';
+import '../database.dart';
 import 'package:flutter/widgets.dart';
 import 'package:drift/drift.dart';
 
@@ -10,6 +10,7 @@ Future<void> updateEvent({
   DateTime? startTime,
   DateTime? endTime,
   required String color,
+  int? taskId,
 }) async {
   // ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +25,7 @@ Future<void> updateEvent({
         startTime: Value(startTime),
         endTime:   Value(endTime),
         color:     Value(color),
+        taskId:    taskId != null ? Value(taskId) : const Value.absent(),
       ),
     );
   await db.close();

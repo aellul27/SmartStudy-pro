@@ -11,13 +11,25 @@ class EventItems extends Table {
   DateTimeColumn get startTime => dateTime().nullable()();
   DateTimeColumn get endTime => dateTime().nullable()();
   TextColumn get color => text()();
+  IntColumn get taskId => integer().nullable().references(TaskItems, #id)();
 }
 
-@DriftDatabase(tables: [EventItems])
+class TaskItems extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get title => text().withLength(min: 1, max: 512)();
+  TextColumn get subject => text()();
+  IntColumn get requiredTime => integer()();
+  DateTimeColumn get dueDate => dateTime().nullable()();
+  IntColumn get priority => integer()();
+  BoolColumn get completed => boolean()();
+}
+
+
+@DriftDatabase(tables: [EventItems, TaskItems])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   static QueryExecutor _openConnection() {
     return driftDatabase(
