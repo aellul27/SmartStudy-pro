@@ -1,45 +1,14 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:intl/intl.dart';
-import '../widgets/addevent.dart';
-import '../widgets/removeevent.dart';
-import '../widgets/updateevent.dart';
+import 'package:smartstudy_pro/widgets/event/removeevent.dart';
+import '../widgets/event/addevent.dart';
+import '../widgets/event/updateevent.dart';
 import '../database/events/add_events.dart';
 import '../database/events/get_events.dart';
-import '../database/events/remove_events.dart';
 import '../database/events/update_events.dart';
+import '../database/events/remove_events.dart';
 import '../database/event_item.dart';
-
-class StudyCrossPainter extends CustomPainter {
-final Color color;
-const StudyCrossPainter({required this.color});
-
-@override
-void paint(Canvas canvas, Size size) {
-  final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.2;
-    const step = 6.0;
-    // ↘ lines
-    for (double i = -size.height; i < size.width; i += step) {
-      canvas.drawLine(
-        Offset(i, 0),
-        Offset(i + size.height, size.height),
-        paint,
-      );
-    }
-    // ↙ lines
-    for (double i = 0; i < size.width + size.height; i += step) {
-      canvas.drawLine(
-        Offset(i, 0),
-        Offset(i - size.height, size.height),
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter old) => false;
-}
+import '../widgets/timetable_viewer.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -148,8 +117,7 @@ class _CalendarPageState extends State<CalendarPage> {
     // cell sizing
     const cellWidth = 100.0;
     const cellHeight = 60.0;
-    final totalWidth = cellWidth * (days.length + 1);
-    final totalHeight = (cellHeight + 2) * visibleHours.length;
+
 
     return ScaffoldPage(
       header: PageHeader(
@@ -207,165 +175,16 @@ class _CalendarPageState extends State<CalendarPage> {
                 scrollDirection: Axis.horizontal,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.vertical,
-                  child: SizedBox(
-                    width: totalWidth,
-                    height: totalHeight,
-                    child: Stack(
-                      children: [
-                        // 1) the grid underneath
-                        Table(
-                          defaultColumnWidth:
-                              const FixedColumnWidth(cellWidth),
-                          border: TableBorder.all(color: Colors.grey),
-                          children: [
-                            // header row
-                            TableRow(children: [
-                              Container(), // top-left
-                              for (var d in days)
-                                Button(
-                                  onPressed: () {
-                                    // schedule at the first visible hour
-                                    final dt = DateTime(d.year, d.month, d.day, sIdx);
-                                    _addEvent(dt);
-                                  },
-                                  style: ButtonStyle(
-                                    padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                                    backgroundColor: WidgetStatePropertyAll(Colors.blue.lightest),
-                                  ),
-                                  child: SizedBox(
-                                    height: cellHeight,
-                                    child: Center(
-                                      child: Text(
-                                        DateFormat('E\nMMM d').format(d),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ),
-                                ),  
-                            ]),
-                            // hour rows
-                            for (var h in visibleHours)
-                              TableRow(children: [
-                                Container(
-                                  height: cellHeight,
-                                  color: Colors.grey,
-                                  padding: const EdgeInsets.all(4),
-                                  child:
-                                      Text('${h.toString().padLeft(2, '0')}:00'),
-                                ),
-                                for (var d in days)
-                                 Button(
-                                   onPressed: () {
-                                     final dt = DateTime(
-                                         d.year, d.month, d.day, h);
-                                     _addEvent(dt);
-                                   },
-                                   style: ButtonStyle(
-                                     // remove padding so it fills the cell
-                                     padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                                     // transparent background
-                                     backgroundColor:
-                                         WidgetStatePropertyAll(Colors.transparent),
-                                   ),
-                                   child: SizedBox(
-                                     height: cellHeight,
-                                   ),
-                                 ),
-                              ]),
-                          ],
-                        ),
-
-                        // 2) overlay each event as a Positioned colored box
-                        // … inside your for (var ev in _events) Builder(builder: (_) { … }) …
-                        for (var ev in _events)
-                          if (days.any((d) =>
-                              d.year == ev.startTime.year &&
-                              d.month == ev.startTime.month &&
-                              d.day == ev.startTime.day))
-                            Builder(builder: (_) {
-                              final dayIndex = days.indexWhere((d) =>
-                                  d.year == ev.startTime.year &&
-                                  d.month == ev.startTime.month &&
-                                  d.day == ev.startTime.day);
-
-                              final startFraction =
-                                  (ev.startTime.hour + ev.startTime.minute / 60) - sIdx;
-                              final durationHours =
-                                  ev.endTime.difference(ev.startTime).inMinutes / 60;
-
-                              // compute raw top/bottom relative to the header row
-                              final headerBottom = cellHeight + 1; // header height + 1px border
-                              final slotHeight = cellHeight + 2;   // cell + 2px border
-                              final rawTop = cellHeight + startFraction * slotHeight;
-                              final rawBottom = rawTop + durationHours * slotHeight - 2;
-
-                              // if the entire box is above the header → don’t draw
-                              if (rawBottom <= headerBottom) return const SizedBox.shrink();
-
-                              // clamp to visible area
-                              final top = rawTop < headerBottom ? headerBottom : rawTop;
-                              final bottomLimit = headerBottom + visibleHours.length * slotHeight - 2;
-                              final bottom = rawBottom > bottomLimit ? bottomLimit : rawBottom;
-                              final height = bottom - top;
-
-                              return Positioned(
-                                // move right past the time‐column + 1px border
-                                left: (dayIndex + 1) * cellWidth + 1,
-                                // move down past the header‐row + 1px border
-                                top: top,
-                                width: cellWidth - 2,
-                                height: height,
-                                child: GestureDetector(
-                                  onTap: () => _updateEvent(ev),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: ev.color.withAlpha(100),
-                                        border: Border.all(color: ev.color, width: 1),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Stack(
-                                        children: [
-                                          if (ev.eventType == 'Study time')
-                                            Positioned.fill(
-                                              child: CustomPaint(
-                                                painter: StudyCrossPainter(
-                                                  color: ev.color.withAlpha(100), // you can bump alpha if needed
-                                                ),
-                                              ),
-                                            ),
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                children: [
-                                                    IconButton(
-                                                    icon: const Icon(FluentIcons.delete, size: 12),
-                                                    onPressed: () async {
-                                                      await _removeEvent(ev);
-                                                    },
-                                                  ),  
-                                                ],
-                                               ),
-                                             
-                                              const SizedBox(height: 2),
-                                              Text(ev.title,
-                                                  overflow: TextOverflow.ellipsis),
-                                            ],
-                                         ),
-                                        ]
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              );
-                            }
-                          ),
-                      ],
-                    ),
+                  child: TimetableViewer(
+                    days: days,
+                    visibleHours: visibleHours,
+                    events: _events,
+                    cellWidth: cellWidth,
+                    cellHeight: cellHeight,
+                    editable: true,
+                    onCellTap: (dt) => _addEvent(dt),
+                    onEventTap: (ev) => _updateEvent(ev),
+                    onEventDelete: (ev) => _removeEvent(ev),
                   ),
                 ),
               ),
