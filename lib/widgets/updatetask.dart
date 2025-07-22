@@ -11,7 +11,7 @@ class UpdateTaskData {
   UpdateTaskData(this.title, this.subject, this.requiredTime, this.dueDate, this.priority, this.completed);
 }
 
-class UpdateaskDialog {
+class UpdateTaskDialog {
   static Future<UpdateTaskData?> show(BuildContext context, UpdateTaskData task) async {
     final titleCtrl = TextEditingController();
     final subjectCtrl = TextEditingController();
@@ -83,10 +83,6 @@ class UpdateaskDialog {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const Text("🚨"),
-                      // const Icon(
-                      //   FluentIcons.status_triangle_exclamation,
-                      //   size: 30,
-                      // ),
                       Expanded(child: Slider (
                         label: priority.toString(),
                         value: priority.toDouble(),
@@ -95,11 +91,11 @@ class UpdateaskDialog {
                         divisions: 9,
                         onChanged: (v) => dialogSetState(() => priority = v.toInt()),
                       )),
-                      // const Icon(
-                      //   FluentIcons.bulleted_list,
-                      //   size: 30,
-                      // ),
                       const Text("😴"),
+                      ToggleSwitch(
+                        checked: completed,
+                        onChanged: (s) => dialogSetState(() => completed = s),
+                      )
                     ]
                   ),
                 ],

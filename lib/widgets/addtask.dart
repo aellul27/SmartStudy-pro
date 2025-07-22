@@ -83,10 +83,6 @@ class AddTaskDialog {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const Text("🚨"),
-                      // const Icon(
-                      //   FluentIcons.status_triangle_exclamation,
-                      //   size: 30,
-                      // ),
                       Expanded(child: Slider (
                         label: priority.toString(),
                         value: priority.toDouble(),
@@ -95,10 +91,6 @@ class AddTaskDialog {
                         divisions: 9,
                         onChanged: (v) => dialogSetState(() => priority = v.toInt()),
                       )),
-                      // const Icon(
-                      //   FluentIcons.bulleted_list,
-                      //   size: 30,
-                      // ),
                       const Text("😴"),
                     ]
                   ),
