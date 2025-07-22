@@ -1,20 +1,11 @@
 import 'package:fluent_ui/fluent_ui.dart';
-
-class UpdateTaskData {
-  final String title;
-  final String subject;
-  final int requiredTime;
-  final DateTime dueDate;
-  final int priority;
-  final bool completed;
-
-  UpdateTaskData(this.title, this.subject, this.requiredTime, this.dueDate, this.priority, this.completed);
-}
+import '../database/task_item.dart';
+import 'package:intl/intl.dart';
 
 class UpdateTaskDialog {
-  static Future<UpdateTaskData?> show(BuildContext context, UpdateTaskData task) async {
-    final titleCtrl = TextEditingController();
-    final subjectCtrl = TextEditingController();
+  static Future<TaskItem?> show(BuildContext context, TaskItem task) async {
+    final titleCtrl = TextEditingController(text: task.title);
+    final subjectCtrl = TextEditingController(text: task.subject);
     
     int requiredTime = task.requiredTime;
     DateTime dueDate = task.dueDate;
@@ -24,7 +15,7 @@ class UpdateTaskDialog {
 
     String? errorText;
 
-    return showDialog<UpdateTaskData>(
+    return showDialog<TaskItem>(
       context: context,
       builder: (_) {
         return StatefulBuilder(
@@ -46,8 +37,8 @@ class UpdateTaskDialog {
                   const SizedBox(height: 12),
                   Text("Subject"), const SizedBox(height: 4 ),
                   TextBox(
-                    controller: subjectCtrl,
                     placeholder: 'Subject',
+                    controller: subjectCtrl,
                   ),
                   const SizedBox(height: 12),
                   Text("Required Time (minutes)"), const SizedBox(height: 4),
@@ -67,12 +58,15 @@ class UpdateTaskDialog {
                           child: Text("Due Date"),
                         ),
                         CalendarDatePicker(
+                          placeholderText: DateFormat.yMd('en_au').format(dueDate),
                           onSelectionChanged: (value) {
-                            debugPrint('${value.selectedDates}');
+                            dialogSetState(() {
+                              dueDate = value.selectedDates[0];
+                            });
                           },
                           isOutOfScopeEnabled: false,
                           isGroupLabelVisible: false,
-                          locale: const Locale('en'),
+                          locale: const Locale('en_au'),
                         ),
                       ],
                     ),
@@ -92,12 +86,12 @@ class UpdateTaskDialog {
                         onChanged: (v) => dialogSetState(() => priority = v.toInt()),
                       )),
                       const Text("😴"),
-                      ToggleSwitch(
-                        checked: completed,
-                        onChanged: (s) => dialogSetState(() => completed = s),
-                      )
-                    ]
-                  ),
+                    ]),
+                  const SizedBox(height: 12),
+                  ToggleSwitch(
+                    checked: completed,
+                    onChanged: (s) => dialogSetState(() => completed = s),
+                  )
                 ],
               ),
             ),
@@ -111,11 +105,11 @@ class UpdateTaskDialog {
                 onPressed: () {
                   final title = titleCtrl.text.trim();
                   final subject = titleCtrl.text.trim();
-                  if (title.isNotEmpty) {
-                    Navigator.pop(ctx, UpdateTaskData(title, subject, requiredTime, dueDate, priority, completed));
+                  if (title.isNotEmpty && subject.isNotEmpty) {
+                    Navigator.pop(ctx, TaskItem(0, title, subject, requiredTime, dueDate, priority, completed));
                   } else {
                     dialogSetState(() {
-                      errorText = 'Please enter a title';
+                      errorText = 'Please enter a title, subject, and a valid due date.';
                     });
                   }
                 },

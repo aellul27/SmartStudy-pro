@@ -1,30 +1,19 @@
 import 'package:fluent_ui/fluent_ui.dart';
-
-class AddTaskData {
-  final String title;
-  final String subject;
-  final int requiredTime;
-  final DateTime dueDate;
-  final int priority;
-  final bool completed;
-
-  AddTaskData(this.title, this.subject, this.requiredTime, this.dueDate, this.priority, this.completed);
-}
-
+import '../database/task_item.dart';
 class AddTaskDialog {
-  static Future<AddTaskData?> show(BuildContext context) async {
+  static Future<TaskItem?> show(BuildContext context) async {
     final titleCtrl = TextEditingController();
     final subjectCtrl = TextEditingController();
     
     int requiredTime = 30;
-    DateTime dueDate = DateTime.now().add(const Duration(days: 1));
+    DateTime? dueDate;
     int priority = 5;
 
     bool completed = false;
 
     String? errorText;
 
-    return showDialog<AddTaskData>(
+    return showDialog<TaskItem>(
       context: context,
       builder: (_) {
         return StatefulBuilder(
@@ -68,11 +57,11 @@ class AddTaskDialog {
                         ),
                         CalendarDatePicker(
                           onSelectionChanged: (value) {
-                            debugPrint('${value.selectedDates}');
+                            dueDate = value.selectedDates[0];
                           },
                           isOutOfScopeEnabled: false,
                           isGroupLabelVisible: false,
-                          locale: const Locale('en'),
+                          locale: const Locale('en_au'),
                         ),
                       ],
                     ),
@@ -107,11 +96,11 @@ class AddTaskDialog {
                 onPressed: () {
                   final title = titleCtrl.text.trim();
                   final subject = titleCtrl.text.trim();
-                  if (title.isNotEmpty) {
-                    Navigator.pop(ctx, AddTaskData(title, subject, requiredTime, dueDate, priority, completed));
+                  if (title.isNotEmpty && subject.isNotEmpty && dueDate != null) {
+                    Navigator.pop(ctx, TaskItem(0, title, subject, requiredTime, dueDate!, priority, completed));
                   } else {
                     dialogSetState(() {
-                      errorText = 'Please enter a title';
+                      errorText = 'Please enter a title, subject, and a valid due date.';
                     });
                   }
                 },

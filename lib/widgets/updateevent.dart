@@ -1,18 +1,8 @@
 import 'package:fluent_ui/fluent_ui.dart';
-
-class UpdateEventData {
-  final int id;
-  final String title;
-  final String eventType;
-  final DateTime startTime;
-  final DateTime endTime;
-  final Color color;
-
-  UpdateEventData(this.id, this.title, this.eventType, this.startTime, this.endTime, this.color);
-}
+import '../database/event_item.dart';
 
 class UpdateEventDialog {
-  static Future<UpdateEventData?> show(BuildContext context, UpdateEventData event) async {
+  static Future<EventItem?> show(BuildContext context, EventItem event) async {
     int id = event.id;
     final titleCtrl = TextEditingController(text: event.title);
     DateTime start = event.startTime;
@@ -22,7 +12,7 @@ class UpdateEventDialog {
     String eventType = event.eventType;
     String? errorText;
 
-    return showDialog<UpdateEventData>(
+    return showDialog<EventItem>(
       context: context,
       builder: (_) {
         return StatefulBuilder(
@@ -103,7 +93,7 @@ class UpdateEventDialog {
                 onPressed: () {
                   final text = titleCtrl.text.trim();
                   if (text.isNotEmpty) {
-                    Navigator.pop(ctx, UpdateEventData(id, text, eventType, start, end, selectedColor));
+                    Navigator.pop(ctx, EventItem(id, text, eventType, start, end, selectedColor));
                   } else {
                     dialogSetState(() {
                       errorText = 'Please enter a title';

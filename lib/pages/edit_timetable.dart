@@ -7,16 +7,7 @@ import '../database/events/add_events.dart';
 import '../database/events/get_events.dart';
 import '../database/events/remove_events.dart';
 import '../database/events/update_events.dart';
-
-class Event {
-  // Include the DB id so we can remove/update
-  final int id;
-  final String title;
-  final String eventType;
-  final DateTime start, end;
-  final Color color;
-  Event(this.id, this.title, this.eventType, this.start, this.end, this.color);
-}
+import '../database/event_item.dart';
 
 class StudyCrossPainter extends CustomPainter {
 final Color color;
@@ -63,7 +54,7 @@ class _CalendarPageState extends State<CalendarPage> {
   String? _startHour, _endHour;
 
   // ── now a flat list of Events ──
-  final List<Event> _events = [];
+  final List<EventItem> _events = [];
 
   @override
   void initState() {
@@ -83,7 +74,7 @@ class _CalendarPageState extends State<CalendarPage> {
         ..clear()
         ..addAll(items
           .where((e) => e.startTime != null && e.endTime != null)
-          .map((e) => Event(
+          .map((e) => EventItem(
             e.id,
             e.title,
             e.eventType,
@@ -120,7 +111,7 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 
-  Future<void> _removeEvent(Event ev) async {
+  Future<void> _removeEvent(EventItem ev) async {
     final confirmed = await RemoveEventDialog.show(context, ev.title);
     if (confirmed == true) {
       await removeEvent(id: ev.id);
@@ -128,10 +119,10 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 
-  Future<void> _updateEvent(Event ev) async {
+  Future<void> _updateEvent(EventItem ev) async {
     final data = await UpdateEventDialog.show(
       context,
-      UpdateEventData(ev.id, ev.title, ev.eventType, ev.start, ev.end, ev.color),
+      EventItem(ev.id, ev.title, ev.eventType, ev.startTime, ev.endTime, ev.color),
     );
     if (data != null) {
       await updateEvent(
@@ -288,19 +279,19 @@ class _CalendarPageState extends State<CalendarPage> {
                         // … inside your for (var ev in _events) Builder(builder: (_) { … }) …
                         for (var ev in _events)
                           if (days.any((d) =>
-                              d.year == ev.start.year &&
-                              d.month == ev.start.month &&
-                              d.day == ev.start.day))
+                              d.year == ev.startTime.year &&
+                              d.month == ev.startTime.month &&
+                              d.day == ev.startTime.day))
                             Builder(builder: (_) {
                               final dayIndex = days.indexWhere((d) =>
-                                  d.year == ev.start.year &&
-                                  d.month == ev.start.month &&
-                                  d.day == ev.start.day);
+                                  d.year == ev.startTime.year &&
+                                  d.month == ev.startTime.month &&
+                                  d.day == ev.startTime.day);
 
                               final startFraction =
-                                  (ev.start.hour + ev.start.minute / 60) - sIdx;
+                                  (ev.startTime.hour + ev.startTime.minute / 60) - sIdx;
                               final durationHours =
-                                  ev.end.difference(ev.start).inMinutes / 60;
+                                  ev.endTime.difference(ev.startTime).inMinutes / 60;
 
                               // compute raw top/bottom relative to the header row
                               final headerBottom = cellHeight + 1; // header height + 1px border
