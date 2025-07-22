@@ -9,7 +9,7 @@ Future<void> addTask({
   required int requiredTime,
   DateTime? dueDate,
   required int priority,
-  bool completed = false,
+  required completed,
   
 }) async {
   // ensure Flutter bindings are ready
