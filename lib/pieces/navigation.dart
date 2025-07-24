@@ -1,5 +1,9 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import '../pages/edit_timetable.dart';
+import '../pages/edit_tasks.dart';
+import '../database/utils/database_utils_export.dart';
+import '../widgets/databaseutils/removedatabase.dart';
+import '../widgets/databaseutils/importdatabase.dart';
 
 class NavigationBar extends StatefulWidget {
   const NavigationBar({super.key});
@@ -32,7 +36,33 @@ class _NavigationBarState extends State<NavigationBar> {
           PaneItem(
             icon: const Icon(FluentIcons.edit),
             title: const Text('Edit Timetable'),
-            body: const Center(child: CalendarPage()),
+            body: const Center(child: EditTimetablePage()),
+          ),
+          PaneItem(
+            icon: const Icon(FluentIcons.edit),
+            title: const Text('Edit Tasks'),
+            body: const Center(child: EditTasksPage()),
+          ),
+          PaneItemAction(
+            icon: const WindowsIcon(WindowsIcons.save),
+            title: const Text('Save file'),
+            onTap: () {
+              dumpDatabaseWithSaveFile();
+            },
+          ),
+          PaneItemAction(
+            icon: const WindowsIcon(WindowsIcons.upload),
+            title: const Text('Load file'),
+            onTap: () async {
+              await ImportDatabaseDialog.show(context);
+            },
+          ),
+          PaneItemAction(
+            icon: const WindowsIcon(WindowsIcons.delete),
+            title: const Text('Delete database'),
+            onTap: () async {
+              await RemoveDatabaseDialog.show(context);
+            },
           ),
         ],
       ),

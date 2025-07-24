@@ -10,13 +10,15 @@ import '../database/events/remove_events.dart';
 import '../database/event_item.dart';
 import '../widgets/timetable_viewer.dart';
 
-class CalendarPage extends StatefulWidget {
-  const CalendarPage({super.key});
+class EditTimetablePage extends StatefulWidget {
+  const EditTimetablePage({super.key});
   @override
-  _CalendarPageState createState() => _CalendarPageState();
+  _EditTimetableState createState() => _EditTimetableState();
 }
 
-class _CalendarPageState extends State<CalendarPage> {
+class _EditTimetableState extends State<EditTimetablePage> {
+  late final ScrollController _horizontalController;
+  late final ScrollController _verticalController;
   late DateTime _weekStart;
   final List<String> _hourOptions =
       List.generate(24, (h) => '${h.toString().padLeft(2, '0')}:00');
@@ -34,6 +36,14 @@ class _CalendarPageState extends State<CalendarPage> {
     _loadWeek();
     _startHour = _hourOptions.first;
     _endHour = _hourOptions.last;
+    _horizontalController = ScrollController();
+    _verticalController = ScrollController();
+  }
+  @override
+  void dispose() {
+    _horizontalController.dispose();
+    _verticalController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadWeek() async {
@@ -170,21 +180,28 @@ class _CalendarPageState extends State<CalendarPage> {
           // ── the scrollable table ──
           Expanded(
             child: Scrollbar(
+              controller: _horizontalController,
               thumbVisibility: true,
               child: SingleChildScrollView(
+                controller: _horizontalController,
                 scrollDirection: Axis.horizontal,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  child: TimetableViewer(
-                    days: days,
-                    visibleHours: visibleHours,
-                    events: _events,
-                    cellWidth: cellWidth,
-                    cellHeight: cellHeight,
-                    editable: true,
-                    onCellTap: (dt) => _addEvent(dt),
-                    onEventTap: (ev) => _updateEvent(ev),
-                    onEventDelete: (ev) => _removeEvent(ev),
+                child: Scrollbar(
+                  controller: _verticalController,
+                  thumbVisibility: true,
+                  child: SingleChildScrollView(
+                    controller: _verticalController,
+                    scrollDirection: Axis.vertical,
+                    child: TimetableViewer(
+                      days: days,
+                      visibleHours: visibleHours,
+                      events: _events,
+                      cellWidth: cellWidth,
+                      cellHeight: cellHeight,
+                      editable: true,
+                      onCellTap: (dt) => _addEvent(dt),
+                      onEventTap: (ev) => _updateEvent(ev),
+                      onEventDelete: (ev) => _removeEvent(ev),
+                    ),
                   ),
                 ),
               ),

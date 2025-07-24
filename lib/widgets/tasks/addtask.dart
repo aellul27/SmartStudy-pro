@@ -1,5 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import '../../database/task_item.dart';
+import 'package:smartstudy_pro/database/tasks/get_subjects.dart';
 class AddTaskDialog {
   static Future<TaskItem?> show(BuildContext context) async {
     final titleCtrl = TextEditingController();
@@ -12,6 +13,8 @@ class AddTaskDialog {
     bool completed = false;
 
     String? errorText;
+    final subjectlist = await getAllSubjects();
+    
 
     return showDialog<TaskItem>(
       context: context,
@@ -34,9 +37,15 @@ class AddTaskDialog {
                   ],
                   const SizedBox(height: 12),
                   Text("Subject"), const SizedBox(height: 4 ),
-                  TextBox(
+                  AutoSuggestBox(
+                    items: subjectlist.map((subject) {
+                      return AutoSuggestBoxItem(
+                        value: subject,
+                        label: subject.toString(),
+                      );
+                    }).toList(),
                     controller: subjectCtrl,
-                    placeholder: 'Subject',
+                    placeholder: "Subject",
                   ),
                   const SizedBox(height: 12),
                   Text("Required Time (minutes)"), const SizedBox(height: 4),
@@ -95,7 +104,8 @@ class AddTaskDialog {
                 child: const Text('Add'),
                 onPressed: () {
                   final title = titleCtrl.text.trim();
-                  final subject = titleCtrl.text.trim();
+                  String subject = subjectCtrl.text.trim();
+                  subject = '${subject[0].toUpperCase()}${subject.substring(1)}';
                   if (title.isNotEmpty && subject.isNotEmpty && dueDate != null) {
                     Navigator.pop(ctx, TaskItem(0, title, subject, requiredTime, dueDate!, priority, completed));
                   } else {

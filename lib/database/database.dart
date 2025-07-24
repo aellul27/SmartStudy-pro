@@ -28,8 +28,18 @@ class TaskItems extends Table {
 @DriftDatabase(tables: [EventItems, TaskItems])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
+
   @override
   int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        beforeOpen: (details) async {
+          // Always ensure all tables exist before opening, even if schemaVersion is unchanged
+          final m = Migrator(this);
+          await m.createAll();
+        },
+      );
 
   static QueryExecutor _openConnection() {
     return driftDatabase(

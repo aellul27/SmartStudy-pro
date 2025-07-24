@@ -1,6 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import '../database/task_item.dart';
+import '../../database/task_item.dart';
 import 'package:intl/intl.dart';
+import '../../database/tasks/get_subjects.dart';
 
 class UpdateTaskDialog {
   static Future<TaskItem?> show(BuildContext context, TaskItem task) async {
@@ -14,6 +15,7 @@ class UpdateTaskDialog {
     bool completed = task.completed;
 
     String? errorText;
+    final subjectlist = await getAllSubjects();
 
     return showDialog<TaskItem>(
       context: context,
@@ -36,9 +38,15 @@ class UpdateTaskDialog {
                   ],
                   const SizedBox(height: 12),
                   Text("Subject"), const SizedBox(height: 4 ),
-                  TextBox(
-                    placeholder: 'Subject',
+                  AutoSuggestBox(
+                    items: subjectlist.map((subject) {
+                      return AutoSuggestBoxItem(
+                        value: subject,
+                        label: subject.toString(),
+                      );
+                    }).toList(),
                     controller: subjectCtrl,
+                    placeholder: "Subject",
                   ),
                   const SizedBox(height: 12),
                   Text("Required Time (minutes)"), const SizedBox(height: 4),
@@ -104,9 +112,10 @@ class UpdateTaskDialog {
                 child: const Text('Update'),
                 onPressed: () {
                   final title = titleCtrl.text.trim();
-                  final subject = titleCtrl.text.trim();
+                  String subject = subjectCtrl.text.trim();
+                  subject = '${subject[0].toUpperCase()}${subject.substring(1)}';
                   if (title.isNotEmpty && subject.isNotEmpty) {
-                    Navigator.pop(ctx, TaskItem(0, title, subject, requiredTime, dueDate, priority, completed));
+                    Navigator.pop(ctx, TaskItem(task.id, title, subject, requiredTime, dueDate, priority, completed));
                   } else {
                     dialogSetState(() {
                       errorText = 'Please enter a title, subject, and a valid due date.';
