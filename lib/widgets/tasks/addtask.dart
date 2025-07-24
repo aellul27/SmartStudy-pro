@@ -101,16 +101,16 @@ class AddTaskDialog {
                 onPressed: () => Navigator.pop(ctx),
               ),
               FilledButton(
-                child: const Text('Add'),
+                child: const Text('Update'),
                 onPressed: () {
                   final title = titleCtrl.text.trim();
                   String subject = subjectCtrl.text.trim();
                   subject = '${subject[0].toUpperCase()}${subject.substring(1)}';
-                  if (title.isNotEmpty && subject.isNotEmpty && dueDate != null) {
+                  if (title.isNotEmpty && subject.isNotEmpty && subject != "All") {
                     Navigator.pop(ctx, TaskItem(0, title, subject, requiredTime, dueDate!, priority, completed));
                   } else {
                     dialogSetState(() {
-                      errorText = 'Please enter a title, subject, and a valid due date.';
+                      errorText = 'Please enter a title, subject, and a valid due date. Subject cannot be "All".';
                     });
                   }
                 },

@@ -48,6 +48,7 @@ class _EditTimetableState extends State<EditTimetablePage> {
 
   Future<void> _loadWeek() async {
     final items = await getAllEventsWeek(weekSearch: _weekStart);
+    if (!mounted) return;
     setState(() {
       _events
         ..clear()

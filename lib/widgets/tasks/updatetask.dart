@@ -114,11 +114,11 @@ class UpdateTaskDialog {
                   final title = titleCtrl.text.trim();
                   String subject = subjectCtrl.text.trim();
                   subject = '${subject[0].toUpperCase()}${subject.substring(1)}';
-                  if (title.isNotEmpty && subject.isNotEmpty) {
+                  if (title.isNotEmpty && subject.isNotEmpty && subject != "All") {
                     Navigator.pop(ctx, TaskItem(task.id, title, subject, requiredTime, dueDate, priority, completed));
                   } else {
                     dialogSetState(() {
-                      errorText = 'Please enter a title, subject, and a valid due date.';
+                      errorText = 'Please enter a title, subject, and a valid due date. Subject cannot be "All".';
                     });
                   }
                 },
