@@ -100,8 +100,8 @@ class _EditTaskState extends State<EditTasksPage> {
                 value: _selectedsubject,
                 items: _subjects.map<ComboBoxItem<String>>((e) {
                   return ComboBoxItem<String>(
-                    child: Text(e),
                     value: e,
+                    child: Text(e),
                   );
                 }).toList(),
                 onChanged: (subject) {
