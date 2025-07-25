@@ -526,9 +526,9 @@ class $EventItemsTable extends EventItems
   late final GeneratedColumn<DateTime> startTime = GeneratedColumn<DateTime>(
     'start_time',
     aliasedName,
-    true,
+    false,
     type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
+    requiredDuringInsert: true,
   );
   static const VerificationMeta _endTimeMeta = const VerificationMeta(
     'endTime',
@@ -537,9 +537,9 @@ class $EventItemsTable extends EventItems
   late final GeneratedColumn<DateTime> endTime = GeneratedColumn<DateTime>(
     'end_time',
     aliasedName,
-    true,
+    false,
     type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
+    requiredDuringInsert: true,
   );
   static const VerificationMeta _colorMeta = const VerificationMeta('color');
   @override
@@ -608,12 +608,16 @@ class $EventItemsTable extends EventItems
         _startTimeMeta,
         startTime.isAcceptableOrUnknown(data['start_time']!, _startTimeMeta),
       );
+    } else if (isInserting) {
+      context.missing(_startTimeMeta);
     }
     if (data.containsKey('end_time')) {
       context.handle(
         _endTimeMeta,
         endTime.isAcceptableOrUnknown(data['end_time']!, _endTimeMeta),
       );
+    } else if (isInserting) {
+      context.missing(_endTimeMeta);
     }
     if (data.containsKey('color')) {
       context.handle(
@@ -653,14 +657,16 @@ class $EventItemsTable extends EventItems
             DriftSqlType.string,
             data['${effectivePrefix}event_type'],
           )!,
-      startTime: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}start_time'],
-      ),
-      endTime: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}end_time'],
-      ),
+      startTime:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}start_time'],
+          )!,
+      endTime:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}end_time'],
+          )!,
       color:
           attachedDatabase.typeMapping.read(
             DriftSqlType.string,
@@ -683,16 +689,16 @@ class EventItem extends DataClass implements Insertable<EventItem> {
   final int id;
   final String title;
   final String eventType;
-  final DateTime? startTime;
-  final DateTime? endTime;
+  final DateTime startTime;
+  final DateTime endTime;
   final String color;
   final int? taskId;
   const EventItem({
     required this.id,
     required this.title,
     required this.eventType,
-    this.startTime,
-    this.endTime,
+    required this.startTime,
+    required this.endTime,
     required this.color,
     this.taskId,
   });
@@ -702,12 +708,8 @@ class EventItem extends DataClass implements Insertable<EventItem> {
     map['id'] = Variable<int>(id);
     map['title'] = Variable<String>(title);
     map['event_type'] = Variable<String>(eventType);
-    if (!nullToAbsent || startTime != null) {
-      map['start_time'] = Variable<DateTime>(startTime);
-    }
-    if (!nullToAbsent || endTime != null) {
-      map['end_time'] = Variable<DateTime>(endTime);
-    }
+    map['start_time'] = Variable<DateTime>(startTime);
+    map['end_time'] = Variable<DateTime>(endTime);
     map['color'] = Variable<String>(color);
     if (!nullToAbsent || taskId != null) {
       map['task_id'] = Variable<int>(taskId);
@@ -720,14 +722,8 @@ class EventItem extends DataClass implements Insertable<EventItem> {
       id: Value(id),
       title: Value(title),
       eventType: Value(eventType),
-      startTime:
-          startTime == null && nullToAbsent
-              ? const Value.absent()
-              : Value(startTime),
-      endTime:
-          endTime == null && nullToAbsent
-              ? const Value.absent()
-              : Value(endTime),
+      startTime: Value(startTime),
+      endTime: Value(endTime),
       color: Value(color),
       taskId:
           taskId == null && nullToAbsent ? const Value.absent() : Value(taskId),
@@ -743,8 +739,8 @@ class EventItem extends DataClass implements Insertable<EventItem> {
       id: serializer.fromJson<int>(json['id']),
       title: serializer.fromJson<String>(json['title']),
       eventType: serializer.fromJson<String>(json['eventType']),
-      startTime: serializer.fromJson<DateTime?>(json['startTime']),
-      endTime: serializer.fromJson<DateTime?>(json['endTime']),
+      startTime: serializer.fromJson<DateTime>(json['startTime']),
+      endTime: serializer.fromJson<DateTime>(json['endTime']),
       color: serializer.fromJson<String>(json['color']),
       taskId: serializer.fromJson<int?>(json['taskId']),
     );
@@ -756,8 +752,8 @@ class EventItem extends DataClass implements Insertable<EventItem> {
       'id': serializer.toJson<int>(id),
       'title': serializer.toJson<String>(title),
       'eventType': serializer.toJson<String>(eventType),
-      'startTime': serializer.toJson<DateTime?>(startTime),
-      'endTime': serializer.toJson<DateTime?>(endTime),
+      'startTime': serializer.toJson<DateTime>(startTime),
+      'endTime': serializer.toJson<DateTime>(endTime),
       'color': serializer.toJson<String>(color),
       'taskId': serializer.toJson<int?>(taskId),
     };
@@ -767,16 +763,16 @@ class EventItem extends DataClass implements Insertable<EventItem> {
     int? id,
     String? title,
     String? eventType,
-    Value<DateTime?> startTime = const Value.absent(),
-    Value<DateTime?> endTime = const Value.absent(),
+    DateTime? startTime,
+    DateTime? endTime,
     String? color,
     Value<int?> taskId = const Value.absent(),
   }) => EventItem(
     id: id ?? this.id,
     title: title ?? this.title,
     eventType: eventType ?? this.eventType,
-    startTime: startTime.present ? startTime.value : this.startTime,
-    endTime: endTime.present ? endTime.value : this.endTime,
+    startTime: startTime ?? this.startTime,
+    endTime: endTime ?? this.endTime,
     color: color ?? this.color,
     taskId: taskId.present ? taskId.value : this.taskId,
   );
@@ -826,8 +822,8 @@ class EventItemsCompanion extends UpdateCompanion<EventItem> {
   final Value<int> id;
   final Value<String> title;
   final Value<String> eventType;
-  final Value<DateTime?> startTime;
-  final Value<DateTime?> endTime;
+  final Value<DateTime> startTime;
+  final Value<DateTime> endTime;
   final Value<String> color;
   final Value<int?> taskId;
   const EventItemsCompanion({
@@ -843,12 +839,14 @@ class EventItemsCompanion extends UpdateCompanion<EventItem> {
     this.id = const Value.absent(),
     required String title,
     required String eventType,
-    this.startTime = const Value.absent(),
-    this.endTime = const Value.absent(),
+    required DateTime startTime,
+    required DateTime endTime,
     required String color,
     this.taskId = const Value.absent(),
   }) : title = Value(title),
        eventType = Value(eventType),
+       startTime = Value(startTime),
+       endTime = Value(endTime),
        color = Value(color);
   static Insertable<EventItem> custom({
     Expression<int>? id,
@@ -874,8 +872,8 @@ class EventItemsCompanion extends UpdateCompanion<EventItem> {
     Value<int>? id,
     Value<String>? title,
     Value<String>? eventType,
-    Value<DateTime?>? startTime,
-    Value<DateTime?>? endTime,
+    Value<DateTime>? startTime,
+    Value<DateTime>? endTime,
     Value<String>? color,
     Value<int?>? taskId,
   }) {
@@ -1288,8 +1286,8 @@ typedef $$EventItemsTableCreateCompanionBuilder =
       Value<int> id,
       required String title,
       required String eventType,
-      Value<DateTime?> startTime,
-      Value<DateTime?> endTime,
+      required DateTime startTime,
+      required DateTime endTime,
       required String color,
       Value<int?> taskId,
     });
@@ -1298,8 +1296,8 @@ typedef $$EventItemsTableUpdateCompanionBuilder =
       Value<int> id,
       Value<String> title,
       Value<String> eventType,
-      Value<DateTime?> startTime,
-      Value<DateTime?> endTime,
+      Value<DateTime> startTime,
+      Value<DateTime> endTime,
       Value<String> color,
       Value<int?> taskId,
     });
@@ -1534,8 +1532,8 @@ class $$EventItemsTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String> eventType = const Value.absent(),
-                Value<DateTime?> startTime = const Value.absent(),
-                Value<DateTime?> endTime = const Value.absent(),
+                Value<DateTime> startTime = const Value.absent(),
+                Value<DateTime> endTime = const Value.absent(),
                 Value<String> color = const Value.absent(),
                 Value<int?> taskId = const Value.absent(),
               }) => EventItemsCompanion(
@@ -1552,8 +1550,8 @@ class $$EventItemsTableTableManager
                 Value<int> id = const Value.absent(),
                 required String title,
                 required String eventType,
-                Value<DateTime?> startTime = const Value.absent(),
-                Value<DateTime?> endTime = const Value.absent(),
+                required DateTime startTime,
+                required DateTime endTime,
                 required String color,
                 Value<int?> taskId = const Value.absent(),
               }) => EventItemsCompanion.insert(

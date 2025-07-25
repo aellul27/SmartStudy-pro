@@ -53,13 +53,12 @@ class _EditTimetableState extends State<EditTimetablePage> {
       _events
         ..clear()
         ..addAll(items
-          .where((e) => e.startTime != null && e.endTime != null)
           .map((e) => EventItem(
             e.id,
             e.title,
             e.eventType,
-            e.startTime!,
-            e.endTime!,
+            e.startTime,
+            e.endTime,
             _parseColor(e.color),
             e.taskId,
           ))
@@ -103,6 +102,16 @@ class _EditTimetableState extends State<EditTimetablePage> {
     }
   }
 
+  Future<void> _removeEvents() async {
+    final confirmed = await RemoveEventDialog.show(context, "All Events This Week");
+    if (confirmed == true) {
+      for (var ev in _events) {
+        await removeEvent(id: ev.id);
+      }
+      await _loadWeek();
+    }
+  }
+
   Future<void> _updateEvent(EventItem ev) async {
     final data = await UpdateEventDialog.show(
       context,
@@ -139,7 +148,7 @@ class _EditTimetableState extends State<EditTimetablePage> {
         leading: Row(children: [
           IconButton(icon: const Icon(FluentIcons.chevron_left), onPressed: () => _shiftWeek(-7)),
           IconButton(icon: const Icon(FluentIcons.chevron_right), onPressed: () => _shiftWeek(7)),
-          IconButton(icon: const Icon(FluentIcons.calculator_multiply), onPressed: () => DoNothingAction),
+          IconButton(icon: const Icon(FluentIcons.calculator_multiply), onPressed: () => _removeEvents()),
         ]),
         title: Text(
           '${DateFormat('d/M/y').format(days.first)} – ${DateFormat('d/M/y').format(days.last)}',

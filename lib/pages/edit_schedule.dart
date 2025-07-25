@@ -1,5 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:intl/intl.dart';
+import 'package:smartstudy_pro/widgets/tasks/assigntasks.dart';
 import '../database/events/get_events.dart';
 import '../database/events/update_events.dart';
 import '../database/event_item.dart';
@@ -8,6 +9,7 @@ import '../database/tasks/get_tasks.dart';
 import '../widgets/event/assignevent.dart';
 import '../widgets/timetable_viewer.dart';
 import '../widgets/event/removeassign.dart';
+import '../pieces/auto_assign.dart';
 
 class EditSchedulePage extends StatefulWidget {
   const EditSchedulePage({super.key});
@@ -72,13 +74,12 @@ class _EditScheduleState extends State<EditSchedulePage> {
       _events
         ..clear()
         ..addAll(items
-          .where((e) => e.startTime != null && e.endTime != null)
           .map((e) => EventItem(
                 e.id,
                 e.title,
                 e.eventType,
-                e.startTime!,
-                e.endTime!,
+                e.startTime,
+                e.endTime,
                 _parseColor(e.color),
                 e.taskId,
                 taskItem: e.taskId != null ? taskItems[e.taskId!] : null,
@@ -97,7 +98,7 @@ class _EditScheduleState extends State<EditSchedulePage> {
     setState(() => _weekStart = _weekStart.add(Duration(days: days)));
     await _loadWeek();
   }
-  
+
   Future<void> _assignEvent(EventItem ev) async {
     final data = await AssignEventDialog.show(context, ev);
     if (data != null) {
@@ -130,6 +131,33 @@ class _EditScheduleState extends State<EditSchedulePage> {
     }
   }
 
+  Future<void> _removeAllAssigns() async {
+    final confirmed = await RemoveAssignDialog.show(context, "All Assigns This Week");
+    if (confirmed == true) {
+      for (var ev in _events) {
+        await updateEvent(
+        id: ev.id,
+        title: ev.title,
+        eventType: ev.eventType,
+        startTime: ev.startTime,
+        endTime: ev.endTime,
+        color: '#${ev.color.toARGB32().toRadixString(16).padLeft(8, '0')}',
+        taskId: null,
+      );
+      }
+      await _loadWeek();
+    }
+  }
+
+
+  Future<void> _autoAssign() async {
+    final confirmed = await AssignTasksDialog.show(context);
+    if (confirmed == true) {
+      await autoAssignStudyTime(_weekStart);
+      await _loadWeek();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final days = List.generate(7, (i) => _weekStart.add(Duration(days: i)));
@@ -148,7 +176,11 @@ class _EditScheduleState extends State<EditSchedulePage> {
         leading: Row(children: [
           IconButton(icon: const Icon(FluentIcons.chevron_left), onPressed: () => _shiftWeek(-7)),
           IconButton(icon: const Icon(FluentIcons.chevron_right), onPressed: () => _shiftWeek(7)),
-          IconButton(icon: const Icon(FluentIcons.calculator_multiply), onPressed: () => DoNothingAction),
+          IconButton(
+            icon: const Icon(FluentIcons.lightning_bolt),
+            onPressed: _autoAssign,
+          ),
+          IconButton(icon: const Icon(FluentIcons.calculator_multiply), onPressed: () => _removeAllAssigns()),
         ]),
         title: Text(
           '${DateFormat('d/M/y').format(days.first)} – ${DateFormat('d/M/y').format(days.last)}',

@@ -1,7 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:intl/intl.dart';
 import '../database/event_item.dart';
-import '../database/task_item.dart';
 import 'study_cross_painter.dart';
 
 class TimetableViewer extends StatelessWidget {
@@ -55,8 +54,13 @@ class TimetableViewer extends StatelessWidget {
                         : null,
                     style: ButtonStyle(
                       padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                      backgroundColor: WidgetStatePropertyAll(Colors.blue.lightest),
-                    ),
+                      backgroundColor: WidgetStatePropertyAll(
+                        (DateTime.now().year == d.year &&
+                          DateTime.now().month == d.month &&
+                          DateTime.now().day == d.day)
+                            ? Colors.red
+                            : Colors.blue.lightest,
+                      )),
                     child: SizedBox(
                       height: cellHeight,
                       child: Center(
@@ -155,6 +159,7 @@ class TimetableViewer extends StatelessWidget {
                                   Text(
                                     ev.title,
                                     overflow: TextOverflow.ellipsis,
+                                    textScaler: TextScaler.linear(0.75),
                                   ),
                                   if (showTasks == true && ev.taskItem != null)
                                   Text(

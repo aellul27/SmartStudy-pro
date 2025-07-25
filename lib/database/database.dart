@@ -8,8 +8,8 @@ class EventItems extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get title => text().withLength(min: 1, max: 512)();
   TextColumn get eventType => text()();
-  DateTimeColumn get startTime => dateTime().nullable()();
-  DateTimeColumn get endTime => dateTime().nullable()();
+  DateTimeColumn get startTime => dateTime()();
+  DateTimeColumn get endTime => dateTime()();
   TextColumn get color => text()();
   IntColumn get taskId => integer().nullable().references(TaskItems, #id)();
 }

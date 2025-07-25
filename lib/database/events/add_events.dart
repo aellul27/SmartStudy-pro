@@ -3,7 +3,8 @@ import 'package:flutter/widgets.dart';
 import 'package:drift/drift.dart';
 
 /// Inserts a new EventItem into the local drift database.
-Future<void> addEvent({
+/// Returns the id of the created event.
+Future<int> addEvent({
   required String title,
   required String eventType,
   required DateTime startTime,
@@ -15,16 +16,16 @@ Future<void> addEvent({
   WidgetsFlutterBinding.ensureInitialized();
 
   final db = getDatabaseInstance();
-  await db.into(db.eventItems).insert(
+  final id = await db.into(db.eventItems).insert(
     EventItemsCompanion.insert(
       title: title,
       eventType: eventType,
-      startTime: Value(startTime),
-      endTime: Value(endTime),
+      startTime: startTime,
+      endTime: endTime,
       color: color,
       taskId: taskId != null ? Value(taskId) : const Value.absent(),
     ),
   );
 
-  
+  return id;
 }

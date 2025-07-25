@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../database.dart';
 import 'package:flutter/widgets.dart';
 import 'package:drift/drift.dart';
@@ -7,8 +9,8 @@ Future<void> updateEvent({
   required int id,
   required String title,
   required String eventType,
-  DateTime? startTime,
-  DateTime? endTime,
+  required DateTime startTime,
+  required DateTime endTime,
   required String color,
   int? taskId,
 }) async {

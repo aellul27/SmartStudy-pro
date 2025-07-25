@@ -2,6 +2,22 @@ import '../database.dart';
 import 'package:flutter/widgets.dart';
 import 'package:drift/drift.dart';
 
+
+Future<EventItem?> getEventWithId({
+  required int idToGet,
+}) async {
+  // ensure Flutter bindings are ready
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final db = getDatabaseInstance();
+  final query = db.select(db.eventItems)
+    ..where((e) =>
+      e.id.equals(idToGet),
+    )..limit(1);
+  final items = await query.get();
+  
+  return items.isNotEmpty ? items.first : null;
+}
 /// Get EventItems into the local drift database.
 Future<List<EventItem>> getAllEvents(
 ) async {
