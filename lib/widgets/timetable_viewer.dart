@@ -1,12 +1,14 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:intl/intl.dart';
 import '../database/event_item.dart';
+import '../database/task_item.dart';
 import 'study_cross_painter.dart';
 
 class TimetableViewer extends StatelessWidget {
   final List<DateTime> days;
   final List<int> visibleHours;
   final List<EventItem> events;
+  final bool showTasks;
   final double cellWidth;
   final double cellHeight;
   final bool editable;
@@ -19,6 +21,7 @@ class TimetableViewer extends StatelessWidget {
     required this.days,
     required this.visibleHours,
     required this.events,
+    required this.showTasks,
     this.cellWidth = 100.0,
     this.cellHeight = 60.0,
     required this.editable,
@@ -147,9 +150,32 @@ class TimetableViewer extends StatelessWidget {
                             padding: const EdgeInsets.all(4),
                             child: Align(
                               alignment: Alignment.topLeft,
-                              child: Text(ev.title, overflow: TextOverflow.ellipsis),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    ev.title,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (showTasks == true && ev.taskItem != null)
+                                  Text(
+                                    '${ev.taskItem!.title} - ${ev.taskItem!.subject}',
+                                    overflow: TextOverflow.ellipsis,
+                                    textScaler: TextScaler.linear(0.75),
+                                )
+                                ]
+                              ),
+                              )
                             ),
-                          ),
+                          if (showTasks == true && ev.taskItem != null)
+                            Align(
+                              alignment: Alignment.bottomLeft,
+                              child: 
+                                Icon(
+                                  FluentIcons.circle_fill,
+                                  size: 24,
+                                  color: Color.lerp(Colors.red, Colors.blue, (ev.taskItem!.priority - 1) / 9)!.withAlpha(200)
+                                )
+                              ),
                           if (editable == true)
                             Align(
                               alignment: Alignment.bottomRight,

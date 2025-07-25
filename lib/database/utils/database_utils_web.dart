@@ -1,9 +1,10 @@
 import 'package:drift/wasm.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import '../database.dart';
 
 /// Dumps the current database and lets the user choose a save location using saveFile().
-Future<void> dumpDatabaseWithSaveFile() async {
+Future<void> dumpDatabaseWithSaveFile({BuildContext? context}) async {
   final db = getDatabaseInstance();
   await db.close();
   final probe = await WasmDatabase.probe(
@@ -11,6 +12,10 @@ Future<void> dumpDatabaseWithSaveFile() async {
     driftWorkerUri: Uri.parse('drift_worker.js'),
     databaseName: 'AppDatabase',
   );
+  if (probe.existingDatabases.isEmpty) {
+    getDatabaseInstance(reset: true);
+    return;
+  }
   final exportedBytes = await probe.exportDatabase(probe.existingDatabases[0]);
   await FilePicker.platform.saveFile(
     dialogTitle: 'Save database backup',
@@ -20,7 +25,7 @@ Future<void> dumpDatabaseWithSaveFile() async {
   getDatabaseInstance(reset: true);
 }
 
-Future<void> importDatabaseWithSaveFile() async {
+Future<void> importDatabaseWithSaveFile({BuildContext? context}) async {
   final picked = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['db']);
   // Wait until the user has picked a file, and return early if cancelled or invalid
   if (picked == null || picked.files.isEmpty || picked.files.first.bytes == null) {

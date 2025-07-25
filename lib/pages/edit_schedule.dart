@@ -1,22 +1,21 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:intl/intl.dart';
-import 'package:smartstudy_pro/widgets/event/removeevent.dart';
-import '../widgets/event/addevent.dart';
-import '../widgets/event/updateevent.dart';
-import '../database/events/add_events.dart';
 import '../database/events/get_events.dart';
 import '../database/events/update_events.dart';
-import '../database/events/remove_events.dart';
 import '../database/event_item.dart';
+import '../database/task_item.dart';
+import '../database/tasks/get_tasks.dart';
+import '../widgets/event/assignevent.dart';
 import '../widgets/timetable_viewer.dart';
+import '../widgets/event/removeassign.dart';
 
-class EditTimetablePage extends StatefulWidget {
-  const EditTimetablePage({super.key});
+class EditSchedulePage extends StatefulWidget {
+  const EditSchedulePage({super.key});
   @override
-  _EditTimetableState createState() => _EditTimetableState();
+  _EditScheduleState createState() => _EditScheduleState();
 }
 
-class _EditTimetableState extends State<EditTimetablePage> {
+class _EditScheduleState extends State<EditSchedulePage> {
   late final ScrollController _horizontalController;
   late final ScrollController _verticalController;
   late DateTime _weekStart;
@@ -48,6 +47,26 @@ class _EditTimetableState extends State<EditTimetablePage> {
 
   Future<void> _loadWeek() async {
     final items = await getAllEventsWeek(weekSearch: _weekStart);
+
+    // Fetch all TaskItems for events with a taskId
+    final Map<int, TaskItem> taskItems = {};
+    final eventsWithTaskId = items.where((e) => e.taskId != null).toList();
+    for (final e in eventsWithTaskId) {
+      // You may need to replace this with your actual method to fetch a TaskItem by ID
+      final task = await getTaskWithId(idToGet: e.taskId!);
+      if (task != null) {
+        taskItems[e.taskId!] = TaskItem(
+          task.id,
+          task.title,
+          task.subject,
+          task.requiredTime,
+          task.dueDate!,
+          task.priority,
+          task.completed,
+        );
+      }
+    }
+
     if (!mounted) return;
     setState(() {
       _events
@@ -55,16 +74,15 @@ class _EditTimetableState extends State<EditTimetablePage> {
         ..addAll(items
           .where((e) => e.startTime != null && e.endTime != null)
           .map((e) => EventItem(
-            e.id,
-            e.title,
-            e.eventType,
-            e.startTime!,
-            e.endTime!,
-            _parseColor(e.color),
-            e.taskId,
-          ))
-        )
-      ;
+                e.id,
+                e.title,
+                e.eventType,
+                e.startTime!,
+                e.endTime!,
+                _parseColor(e.color),
+                e.taskId,
+                taskItem: e.taskId != null ? taskItems[e.taskId!] : null,
+              )));
     });
   }
 
@@ -80,34 +98,8 @@ class _EditTimetableState extends State<EditTimetablePage> {
     await _loadWeek();
   }
   
-
-  Future<void> _addEvent(DateTime dt) async {
-    final data = await AddEventDialog.show(context, dt);
-    if (data != null) {
-      await addEvent(
-        title: data.title,
-        eventType: data.eventType,
-        startTime: data.startTime,
-        endTime: data.endTime,
-        color: '#${data.color.toARGB32().toRadixString(16).padLeft(8, '0')}',
-      );
-      await _loadWeek();
-    }
-  }
-
-  Future<void> _removeEvent(EventItem ev) async {
-    final confirmed = await RemoveEventDialog.show(context, ev.title);
-    if (confirmed == true) {
-      await removeEvent(id: ev.id);
-      await _loadWeek();
-    }
-  }
-
-  Future<void> _updateEvent(EventItem ev) async {
-    final data = await UpdateEventDialog.show(
-      context,
-      EventItem(ev.id, ev.title, ev.eventType, ev.startTime, ev.endTime, ev.color, ev.taskId),
-    );
+  Future<void> _assignEvent(EventItem ev) async {
+    final data = await AssignEventDialog.show(context, ev);
     if (data != null) {
       await updateEvent(
         id: data.id,
@@ -116,6 +108,23 @@ class _EditTimetableState extends State<EditTimetablePage> {
         startTime: data.startTime,
         endTime: data.endTime,
         color: '#${data.color.toARGB32().toRadixString(16).padLeft(8, '0')}',
+        taskId: data.taskId,
+      );
+      await _loadWeek();
+    }
+  }
+
+  Future<void> _removeAssign(EventItem ev) async {
+    final confirmed = await RemoveAssignDialog.show(context, ev.title);
+    if (confirmed == true) {
+      await updateEvent(
+        id: ev.id,
+        title: ev.title,
+        eventType: ev.eventType,
+        startTime: ev.startTime,
+        endTime: ev.endTime,
+        color: '#${ev.color.toARGB32().toRadixString(16).padLeft(8, '0')}',
+        taskId: null,
       );
       await _loadWeek();
     }
@@ -200,13 +209,13 @@ class _EditTimetableState extends State<EditTimetablePage> {
                       days: days,
                       visibleHours: visibleHours,
                       events: _events,
-                      showTasks: false,
+                      showTasks: true,
                       cellWidth: cellWidth,
                       cellHeight: cellHeight,
                       editable: true,
-                      onCellTap: (dt) => _addEvent(dt),
-                      onEventTap: (ev) => _updateEvent(ev),
-                      onEventDelete: (ev) => _removeEvent(ev),
+                      onCellTap: (dt) => null,
+                      onEventTap: (ev) => _assignEvent(ev),
+                      onEventDelete: (ev) => _removeAssign(ev),
                     ),
                   ),
                 ),

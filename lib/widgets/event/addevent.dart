@@ -95,7 +95,7 @@ class AddEventDialog {
                 onPressed: () {
                   final text = titleCtrl.text.trim();
                   if (text.isNotEmpty) {
-                    Navigator.pop(ctx, EventItem(0, text, eventType, start, end, selectedColor));
+                    Navigator.pop(ctx, EventItem(0, text, eventType, start, end, selectedColor, null));
                   } else {
                     dialogSetState(() {
                       errorText = 'Please enter a title';

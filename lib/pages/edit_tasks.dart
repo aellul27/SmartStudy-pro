@@ -3,8 +3,10 @@ import 'package:smartstudy_pro/database/tasks/add_tasks.dart';
 import 'package:smartstudy_pro/database/tasks/get_tasks.dart';
 import 'package:smartstudy_pro/database/tasks/get_subjects.dart';
 import 'package:smartstudy_pro/database/tasks/update_tasks.dart';
+import 'package:smartstudy_pro/database/tasks/remove_tasks.dart';
 import 'package:smartstudy_pro/widgets/tasks/addtask.dart';
 import 'package:smartstudy_pro/widgets/tasks/updatetask.dart';
+import 'package:smartstudy_pro/widgets/tasks/removetask.dart';
 import '../database/task_item.dart';
 import 'package:intl/intl.dart';
 
@@ -51,7 +53,13 @@ class _EditTaskState extends State<EditTasksPage> {
       _subjects = ['All', ...items];
     });
   }
-
+  Future<void> _removeTask(TaskItem taskToRemove) async {
+    final data = await RemoveTaskDialog.show(context, taskToRemove.title, taskToRemove.subject);
+    if (data != null) {
+      await removeTask(id: taskToRemove.id);
+      await _loadTasks();
+    }
+  }
   Future<void> _addTask() async {
     final data = await AddTaskDialog.show(context);
     if (data != null) {
@@ -66,7 +74,7 @@ class _EditTaskState extends State<EditTasksPage> {
       await _loadTasks();
     }
   }
-  Future<void> _updateTask(taskToUpdate) async {
+  Future<void> _updateTask(TaskItem taskToUpdate) async {
     final data = await UpdateTaskDialog.show(context, taskToUpdate);
     if (data != null) {
       await updateTask(
@@ -147,7 +155,10 @@ class _EditTaskState extends State<EditTasksPage> {
                       selected = false;
                     }
                   },
-                  trailing: Icon(FluentIcons.delete),
+                  trailing: IconButton(
+                    icon: const Icon(FluentIcons.delete),
+                    onPressed: () => _removeTask(taskiter),
+                  ),
                 );
               }
             ),

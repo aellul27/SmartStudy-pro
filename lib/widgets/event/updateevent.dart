@@ -93,7 +93,7 @@ class UpdateEventDialog {
                 onPressed: () {
                   final text = titleCtrl.text.trim();
                   if (text.isNotEmpty) {
-                    Navigator.pop(ctx, EventItem(id, text, eventType, start, end, selectedColor));
+                    Navigator.pop(ctx, EventItem(id, text, eventType, start, end, selectedColor, event.taskId));
                   } else {
                     dialogSetState(() {
                       errorText = 'Please enter a title';

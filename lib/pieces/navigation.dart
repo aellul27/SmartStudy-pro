@@ -1,6 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import '../pages/edit_timetable.dart';
 import '../pages/edit_tasks.dart';
+import '../pages/edit_schedule.dart';
 import '../database/utils/database_utils_export.dart';
 import '../widgets/databaseutils/removedatabase.dart';
 import '../widgets/databaseutils/importdatabase.dart';
@@ -32,6 +33,11 @@ class _NavigationBarState extends State<NavigationBar> {
             icon: const Icon(FluentIcons.home),
             title: const Text('Home'),
             body: const Center(child: Text('Home page')),
+          ),
+          PaneItem(
+            icon: const Icon(FluentIcons.edit),
+            title: const Text('Edit Schedule'),
+            body: const Center(child: EditSchedulePage()),
           ),
           PaneItem(
             icon: const Icon(FluentIcons.edit),

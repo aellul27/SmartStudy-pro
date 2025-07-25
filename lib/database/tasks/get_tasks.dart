@@ -2,6 +2,24 @@ import '../database.dart';
 import 'package:flutter/widgets.dart';
 import 'package:drift/drift.dart';
 
+/// Get all TaskItems with a specific priority value, optionally filtered by week.
+Future<TaskItem?> getTaskWithId({
+  required int idToGet,
+}) async {
+  // ensure Flutter bindings are ready
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final db = getDatabaseInstance();
+  final query = db.select(db.taskItems)
+    ..where((e) =>
+      e.id.equals(idToGet),
+    )..limit(1);
+  final items = await query.get();
+  
+  return items.isNotEmpty ? items.first : null;
+}
+
+
 /// Get all TaskItems with a specific subject (case-insensitive), optionally filtered by week.
 Future<List<TaskItem>> getAllTasksSubject({
   required String subject,
