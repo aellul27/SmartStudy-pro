@@ -15,7 +15,7 @@ Future<void> updateEvent({
   // ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   await (db.update(db.eventItems)
       ..where((tbl) => tbl.id.equals(id)))
     .write(
@@ -28,5 +28,5 @@ Future<void> updateEvent({
         taskId:    taskId != null ? Value(taskId) : const Value.absent(),
       ),
     );
-  await db.close();
+  
 }

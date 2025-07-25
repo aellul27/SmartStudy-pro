@@ -147,11 +147,7 @@ class TimetableViewer extends StatelessWidget {
                             padding: const EdgeInsets.all(4),
                             child: Align(
                               alignment: Alignment.topLeft,
-                              child:
-                                Expanded(
-                                  child: Text(ev.title, overflow: TextOverflow.ellipsis),
-                                ),
-                              
+                              child: Text(ev.title, overflow: TextOverflow.ellipsis),
                             ),
                           ),
                           if (editable == true)

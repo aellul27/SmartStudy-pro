@@ -14,7 +14,7 @@ Future<void> addEvent({
   // ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   await db.into(db.eventItems).insert(
     EventItemsCompanion.insert(
       title: title,
@@ -26,5 +26,5 @@ Future<void> addEvent({
     ),
   );
 
-  await db.close();
+  
 }

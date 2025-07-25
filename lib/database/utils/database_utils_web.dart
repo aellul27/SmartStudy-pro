@@ -4,6 +4,8 @@ import '../database.dart';
 
 /// Dumps the current database and lets the user choose a save location using saveFile().
 Future<void> dumpDatabaseWithSaveFile() async {
+  final db = getDatabaseInstance();
+  await db.close();
   final probe = await WasmDatabase.probe(
     sqlite3Uri: Uri.parse('sqlite3.wasm'),
     driftWorkerUri: Uri.parse('drift_worker.js'),
@@ -15,33 +17,39 @@ Future<void> dumpDatabaseWithSaveFile() async {
     fileName: 'smartstudy_backup.db',
     bytes: exportedBytes,
   );
+  getDatabaseInstance(reset: true);
 }
 
 Future<void> importDatabaseWithSaveFile() async {
-  var picked = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['db']);
-  if (picked != null) {
-    final probe = await WasmDatabase.probe(
-      sqlite3Uri: Uri.parse('sqlite3.wasm'),
-      driftWorkerUri: Uri.parse('drift_worker.js'),
-      databaseName: 'AppDatabase',
-    );
-    if (probe.existingDatabases.isNotEmpty) {
-      await probe.deleteDatabase(probe.existingDatabases[0]);
-    }
-    await WasmDatabase.open(
-      databaseName: 'AppDatabase',
-      sqlite3Uri: Uri.parse('sqlite3.wasm'),
-      driftWorkerUri: Uri.parse('drift_worker.js'),
-      initializeDatabase: () async {
-        return picked.files.first.bytes;
-      },
-    );
+  final picked = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['db']);
+  // Wait until the user has picked a file, and return early if cancelled or invalid
+  if (picked == null || picked.files.isEmpty || picked.files.first.bytes == null) {
+    return;
   }
+  final db = getDatabaseInstance();
+  await db.close();
+  final probe = await WasmDatabase.probe(
+    sqlite3Uri: Uri.parse('sqlite3.wasm'),
+    driftWorkerUri: Uri.parse('drift_worker.js'),
+    databaseName: 'AppDatabase',
+  );
+  if (probe.existingDatabases.isNotEmpty) {
+    await probe.deleteDatabase(probe.existingDatabases[0]);
+  }
+  await WasmDatabase.open(
+    databaseName: 'AppDatabase',
+    sqlite3Uri: Uri.parse('sqlite3.wasm'),
+    driftWorkerUri: Uri.parse('drift_worker.js'),
+    initializeDatabase: () async {
+      return picked.files.first.bytes;
+    },
+  );
+  getDatabaseInstance(reset: true);
 }
 
 /// Deletes all rows from all user tables in the database (keeps the tables and file).
 Future<void> dropAllTables() async {
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   // Get all user tables
   final tables = await db.customSelect("SELECT name FROM sqlite_master WHERE type='table'").get();
   for (final row in tables) {
@@ -49,5 +57,5 @@ Future<void> dropAllTables() async {
     if (tableName == 'sqlite_sequence' || tableName.startsWith('sqlite_')) continue;
     await db.customStatement('DELETE FROM $tableName');
   }
-  await db.close();
+  
 }

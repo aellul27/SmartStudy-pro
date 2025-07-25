@@ -9,9 +9,9 @@ Future<void> removeEvent({
   // ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   await (db.delete(db.eventItems)..where((t) => t.id.equals(id))).go();
-  await db.close();
+  
 }
 
 Future<void> removeEventDay({
@@ -20,11 +20,11 @@ Future<void> removeEventDay({
   // ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   final startOfDay = DateTime(dayRemove.year, dayRemove.month, dayRemove.day);
   final endOfDay = startOfDay.add(const Duration(days: 1));
   db.delete(db.eventItems).where((t) => t.startTime.isBetweenValues(startOfDay, endOfDay));
-  await db.close();
+  
 }
 
 Future<void> removeEventWeek({
@@ -38,7 +38,7 @@ Future<void> removeEventWeek({
       .subtract(Duration(days: weekday - 1));
   final endOfWeek = startOfWeek.add(const Duration(days: 7));
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   db.delete(db.eventItems).where((t) => t.startTime.isBetweenValues(startOfWeek, endOfWeek));
-  await db.close();
+  
 }

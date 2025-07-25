@@ -15,7 +15,7 @@ Future<void> addTask({
   // ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   await db.into(db.taskItems).insert(
     TaskItemsCompanion.insert(
       title: title,
@@ -27,5 +27,5 @@ Future<void> addTask({
     ),
   );
 
-  await db.close();
+  
 }

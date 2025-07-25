@@ -9,9 +9,9 @@ Future<void> removeEvent({
   // ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   await (db.delete(db.eventItems)..where((t) => t.id.equals(id))).go();
-  await db.close();
+  
 }
 
 Future<void> removeEventDay({
@@ -20,11 +20,11 @@ Future<void> removeEventDay({
   // ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   final startOfDay = DateTime(dayRemove.year, dayRemove.month, dayRemove.day);
   final endOfDay = startOfDay.add(const Duration(days: 1));
   db.delete(db.eventItems).where((t) => t.startTime.isBetweenValues(startOfDay, endOfDay));
-  await db.close();
+  
 }
 
 Future<void> removeEventWeek({
@@ -38,9 +38,9 @@ Future<void> removeEventWeek({
       .subtract(Duration(days: weekday - 1));
   final endOfWeek = startOfWeek.add(const Duration(days: 7));
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   db.delete(db.eventItems).where((t) => t.startTime.isBetweenValues(startOfWeek, endOfWeek));
-  await db.close();
+  
 }
 
 /// Remove a TaskItem by id from the local drift database.
@@ -48,9 +48,9 @@ Future<void> removeTask({
   required int id,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   await (db.delete(db.taskItems)..where((t) => t.id.equals(id))).go();
-  await db.close();
+  
 }
 
 /// Remove all TaskItems with a specific subject.
@@ -58,15 +58,15 @@ Future<void> removeTasksBySubject({
   required String subject,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   await (db.delete(db.taskItems)..where((t) => t.subject.equals(subject))).go();
-  await db.close();
+  
 }
 
 /// Remove all TaskItems from the local drift database.
 Future<void> removeAllTasks() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   await db.delete(db.taskItems).go();
-  await db.close();
+  
 }

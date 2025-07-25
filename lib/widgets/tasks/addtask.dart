@@ -101,12 +101,12 @@ class AddTaskDialog {
                 onPressed: () => Navigator.pop(ctx),
               ),
               FilledButton(
-                child: const Text('Update'),
+                child: const Text('Add'),
                 onPressed: () {
                   final title = titleCtrl.text.trim();
                   String subject = subjectCtrl.text.trim();
                   subject = '${subject[0].toUpperCase()}${subject.substring(1)}';
-                  if (title.isNotEmpty && subject.isNotEmpty && subject != "All") {
+                  if (title.isNotEmpty && subject.isNotEmpty && subject != "All" && dueDate != null) {
                     Navigator.pop(ctx, TaskItem(0, title, subject, requiredTime, dueDate!, priority, completed));
                   } else {
                     dialogSetState(() {

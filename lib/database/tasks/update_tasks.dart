@@ -15,7 +15,7 @@ Future<void> updateTask({
   // ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   await (db.update(db.taskItems)
       ..where((tbl) => tbl.id.equals(id)))
     .write(
@@ -28,5 +28,5 @@ Future<void> updateTask({
         completed: Value(completed),
       ),
     );
-  await db.close();
+  
 }

@@ -28,7 +28,6 @@ class TaskItems extends Table {
 @DriftDatabase(tables: [EventItems, TaskItems])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
-
   @override
   int get schemaVersion => 2;
 
@@ -55,5 +54,15 @@ class AppDatabase extends _$AppDatabase {
       ),
     );
   }
+  // ...existing code...
 }
 
+// Singleton instance for AppDatabase
+AppDatabase? _dbInstance;
+
+AppDatabase getDatabaseInstance({bool reset = false}) {
+  if (reset || _dbInstance == null) {
+    _dbInstance = AppDatabase();
+  }
+  return _dbInstance!;
+}

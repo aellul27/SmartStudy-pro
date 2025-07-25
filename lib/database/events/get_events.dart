@@ -8,9 +8,9 @@ Future<List<EventItem>> getAllEvents(
   // ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   final items = await db.select(db.eventItems).get();
-    await db.close();
+    
   return items;
 }
 
@@ -21,7 +21,7 @@ Future<List<EventItem>> getAllEventsDay({
   // ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   // filter by exact day
   final startOfDay = DateTime(daySearch.year, daySearch.month, daySearch.day);
   final endOfDay = startOfDay.add(const Duration(days: 1));
@@ -30,7 +30,7 @@ Future<List<EventItem>> getAllEventsDay({
       e.startTime.isBetweenValues(startOfDay, endOfDay)
     );
   final items = await query.get();
-  await db.close();
+  
   return items;
 }
 
@@ -41,7 +41,7 @@ Future<List<EventItem>> getAllEventsWeek({
   // ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   // filter by week
   final weekday = weekSearch.weekday;
   final startOfWeek = DateTime(weekSearch.year, weekSearch.month, weekSearch.day)
@@ -52,6 +52,6 @@ Future<List<EventItem>> getAllEventsWeek({
       e.startTime.isBetweenValues(startOfWeek, endOfWeek)
     );
   final items = await query.get();
-  await db.close();
+  
   return items;
 }

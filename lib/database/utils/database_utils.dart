@@ -6,7 +6,7 @@ import '../database.dart';
 /// Desktop/mobile: Dumps the current database and lets the user choose a save location using saveFile().
 Future<void> dumpDatabaseWithSaveFile() async {
   Uint8List? bytes;
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   final tempDir = Directory.systemTemp;
   final tempFile = File('${tempDir.path}/smartstudy_backup_temp.db');
   if (await tempFile.exists()) {
@@ -31,7 +31,7 @@ Future<void> importDatabaseWithSaveFile() async {
   final backupPath = backupFile.files.first.path!;
 
   // Get the path to the main database file
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
 
   // Attach the backup database
   await db.customStatement("ATTACH DATABASE ? AS backup", [backupPath]);
@@ -45,12 +45,11 @@ Future<void> importDatabaseWithSaveFile() async {
   }
   // Detach the backup
   await db.customStatement("DETACH DATABASE backup");
-  await db.close();
 }
 
 /// Deletes all rows from all user tables in the database (keeps the tables and file).
 Future<void> dropAllTables() async {
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   // Get all user tables
   final tables = await db.customSelect("SELECT name FROM sqlite_master WHERE type='table'").get();
   for (final row in tables) {
@@ -58,5 +57,4 @@ Future<void> dropAllTables() async {
     if (tableName == 'sqlite_sequence' || tableName.startsWith('sqlite_')) continue;
     await db.customStatement('DELETE FROM $tableName');
   }
-  await db.close();
 }

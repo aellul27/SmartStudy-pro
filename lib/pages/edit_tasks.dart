@@ -17,7 +17,7 @@ class EditTasksPage extends StatefulWidget {
 class _EditTaskState extends State<EditTasksPage> {
   final List<TaskItem> _tasks = [];
   List _subjects = [];
-  String _selected_subject = "All";
+  String _selectedsubject = "All";
   bool toGetCompleted = false;
   @override
   void initState() {
@@ -46,6 +46,7 @@ class _EditTaskState extends State<EditTasksPage> {
       ;
     });
     items = await getAllSubjects();
+    if (!mounted) return;
     setState(() {
       _subjects = ['All', ...items];
     });
@@ -96,7 +97,7 @@ class _EditTaskState extends State<EditTasksPage> {
           Row(
             children: [
               ComboBox<String>(
-                value: _selected_subject,
+                value: _selectedsubject,
                 items: _subjects.map<ComboBoxItem<String>>((e) {
                   return ComboBoxItem<String>(
                     child: Text(e),
@@ -104,7 +105,7 @@ class _EditTaskState extends State<EditTasksPage> {
                   );
                 }).toList(),
                 onChanged: (subject) {
-                  setState(() => _selected_subject = subject!);
+                  setState(() => _selectedsubject = subject!);
                 },
               ),
               ToggleSwitch(
@@ -124,9 +125,9 @@ class _EditTaskState extends State<EditTasksPage> {
             child: ListView.builder(
               itemCount: _tasks.length,
               itemBuilder: (context, index) {
-                final filteredTasks = _selected_subject == "All"
+                final filteredTasks = _selectedsubject == "All"
                   ? _tasks
-                  : _tasks.where((t) => t.subject == _selected_subject).toList();
+                  : _tasks.where((t) => t.subject == _selectedsubject).toList();
                 if (index >= filteredTasks.length) return const SizedBox.shrink();
                 final taskiter = filteredTasks[index];
                 Color getPriorityColor(int priority) {
@@ -146,6 +147,7 @@ class _EditTaskState extends State<EditTasksPage> {
                       selected = false;
                     }
                   },
+                  trailing: Icon(FluentIcons.delete),
                 );
               }
             ),

@@ -10,7 +10,7 @@ Future<List<TaskItem>> getAllTasksSubject({
   // ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   final query = db.select(db.taskItems)
     ..where((t) {
       final subjectMatch = t.subject.lower().equals(subject.toLowerCase());
@@ -24,7 +24,7 @@ Future<List<TaskItem>> getAllTasksSubject({
       return subjectMatch;
     });
   final items = await query.get();
-  await db.close();
+  
   return items;
 }
 
@@ -36,7 +36,7 @@ Future<List<TaskItem>> getAllTasksPriority({
   // ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   final query = db.select(db.taskItems)
     ..where((t) {
       final priorityMatch = t.priority.equals(priority);
@@ -50,7 +50,7 @@ Future<List<TaskItem>> getAllTasksPriority({
       return priorityMatch;
     });
   final items = await query.get();
-  await db.close();
+  
   return items;
 }
 
@@ -62,7 +62,7 @@ Future<List<TaskItem>> getAllTasksCompleted({
   // ensure Flutter bindings are ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  final db = AppDatabase();
+  final db = getDatabaseInstance();
   final query = db.select(db.taskItems)
     ..where((t) {
       final completedMatch = t.completed.equals(completed);
@@ -76,6 +76,6 @@ Future<List<TaskItem>> getAllTasksCompleted({
       return completedMatch;
     });
   final items = await query.get();
-  await db.close();
+  
   return items;
 }
