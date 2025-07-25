@@ -1,10 +1,13 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:intl/intl.dart';
 import '../database/events/get_events.dart';
+import '../database/events/remove_events.dart';
 import '../database/event_item.dart';
 import '../database/task_item.dart';
 import '../database/tasks/get_tasks.dart';
+import '../database/tasks/update_tasks.dart';
 import '../widgets/timetable_viewer.dart';
+import '../widgets/complete_study.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -92,6 +95,48 @@ class _DashboardState extends State<DashboardPage> {
   void _shiftWeek(int days) async {
     setState(() => _weekStart = _weekStart.add(Duration(days: days)));
     await _loadWeek();
+  }
+
+  Future<void> _completeStudy(EventItem ev) async {
+    final data = await CompleteStudyDialog.show(context, ev.taskItem!.title);
+    if (data != null) {
+      await removeEvent(
+        id: ev.id,
+      );
+      final task = await getTaskWithId(idToGet: ev.taskId!);
+      if (task != null) {
+        bool completed = false;
+        if (task.requiredTime - ev.endTime.difference(ev.startTime).inMinutes == 0) {
+          await showDialog(
+            context: context,
+            builder: (context) => ContentDialog(
+              title: const Text('Task Completed!'),
+              content: const Text('You have completed this task.'),
+              actions: [
+                Button(
+                  child: const Text('Complete task'),
+                  onPressed: () => {Navigator.pop(context), completed = true},
+                ),
+                Button(
+                  child: const Text('Ok'),
+                  onPressed: () => {Navigator.pop(context), completed = false},
+                ),
+              ],
+            ),
+          );
+        }
+        await updateTask(
+          id: task.id, 
+          title: task.title, 
+          subject: task.subject, 
+          requiredTime: task.requiredTime - ev.endTime.difference(ev.startTime).inMinutes, 
+          priority: task.priority, 
+          completed: completed
+        );
+      }
+      
+      await _loadWeek();
+    }
   }
 
   @override
@@ -182,6 +227,7 @@ class _DashboardState extends State<DashboardPage> {
                       cellWidth: cellWidth,
                       cellHeight: cellHeight,
                       editable: false,
+                      onEventTap: _completeStudy,
                     ),
                   ),
                 ),

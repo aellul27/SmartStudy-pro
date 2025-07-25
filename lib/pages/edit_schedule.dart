@@ -153,7 +153,23 @@ class _EditScheduleState extends State<EditSchedulePage> {
   Future<void> _autoAssign() async {
     final confirmed = await AssignTasksDialog.show(context);
     if (confirmed == true) {
-      await autoAssignStudyTime(_weekStart);
+      try {
+        await autoAssignStudyTime(_weekStart);
+      } catch (e) {
+        await showDialog(
+          context: context,
+          builder: (context) => ContentDialog(
+        title: const Text('Auto-Assign Failed'),
+        content: Text(e.toString()),
+        actions: [
+          Button(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+          ),
+        );
+      }
       await _loadWeek();
     }
   }

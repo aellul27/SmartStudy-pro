@@ -39,14 +39,23 @@ Future<void> autoAssignStudyTime(DateTime weekStart) async {
       if (eventMinutes > 0) {
         assignedTime[event.taskId!] = assignedTime[event.taskId!]! + eventMinutes;
       }
+      studyEvents.remove(event);
     }
   }
+  // Calculate total required study minutes and available study event minutes
+  double totalRequiredMinutes = scoredTasks.fold(
+    0.0, (sum, t) => sum + (t.task.requiredTime - assignedTime[t.task.id]!).clamp(0, double.infinity));
+  double totalAvailableMinutes = studyEvents.fold(
+    0.0, (sum, e) => sum + e.endTime.difference(e.startTime).inMinutes.toDouble());
 
+  if (totalAvailableMinutes < totalRequiredMinutes) {
+    throw Exception(
+      'Not enough study time available to assign all tasks. '
+      'Required: ${totalRequiredMinutes.round()} min, '
+      'Available: ${totalAvailableMinutes.round()} min');
+  }
+  
   for (var event in studyEvents) {
-    // If already assigned, skip assigning but do not remove the assignment
-    if (event.taskId != null) {
-      continue;
-    }
 
     double eventMinutes = event.endTime.difference(event.startTime).inMinutes.toDouble();
 
@@ -97,7 +106,7 @@ Future<void> autoAssignStudyTime(DateTime weekStart) async {
           if (newEvent != null && newEvent.eventType == 'Study time') {
             studyEvents.add(newEvent);
           }
-                }
+          }
         break;
       }
     }

@@ -62,7 +62,8 @@ class _NavigationBarState extends State<NavigationBar> {
             title: const Text('Load file'),
             onTap: () async {
               await ImportDatabaseDialog.show(context);
-              setState(() => selected = 0); // Go back to Home page
+              setState(() {}); // Always refresh, even if already on Home
+              selected = 0; 
             },
           ),
           PaneItemAction(
@@ -70,7 +71,8 @@ class _NavigationBarState extends State<NavigationBar> {
             title: const Text('Delete database'),
             onTap: () async {
               await RemoveDatabaseDialog.show(context);
-              setState(() => selected = 0); // Go back to Home page
+              setState(() {}); // Always refresh, even if already on Home
+              selected = 0; 
             },
           ),
         ],

@@ -32,7 +32,7 @@ class TimetableViewer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final totalWidth = cellWidth * (days.length + 1);
-    final totalHeight = (cellHeight + 2) * visibleHours.length;
+    final totalHeight = (cellHeight + 4.5) * visibleHours.length;
     final eventDelete = onEventDelete;
     return SizedBox(
       width: totalWidth,
