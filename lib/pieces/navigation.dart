@@ -1,4 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import '../pages/dashboard.dart';
 import '../pages/edit_timetable.dart';
 import '../pages/edit_tasks.dart';
 import '../pages/edit_schedule.dart';
@@ -32,7 +33,7 @@ class _NavigationBarState extends State<NavigationBar> {
           PaneItem(
             icon: const Icon(FluentIcons.home),
             title: const Text('Home'),
-            body: const Center(child: Text('Home page')),
+            body: const Center(child: DashboardPage()),
           ),
           PaneItem(
             icon: const Icon(FluentIcons.edit),

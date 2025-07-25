@@ -150,9 +150,15 @@ class _EditTimetableState extends State<EditTimetablePage> {
           IconButton(icon: const Icon(FluentIcons.chevron_right), onPressed: () => _shiftWeek(7)),
           IconButton(icon: const Icon(FluentIcons.calculator_multiply), onPressed: () => _removeEvents()),
         ]),
-        title: Text(
-          '${DateFormat('d/M/y').format(days.first)} – ${DateFormat('d/M/y').format(days.last)}',
-        ),
+        title: Column(
+          children: [
+            Text('Timetable editor'),
+            Text(
+              '${DateFormat('d/M/y').format(days.first)} – ${DateFormat('d/M/y').format(days.last)}',
+              textScaler: TextScaler.linear(0.5),
+            ),
+          ],
+        )
       ),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

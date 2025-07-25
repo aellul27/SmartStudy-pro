@@ -96,9 +96,11 @@ class _EditTaskState extends State<EditTasksPage> {
         leading: Row(children: [
           IconButton(icon: const Icon(FluentIcons.add), onPressed: _addTask),
         ]),
-        title: Text(
-          'Edit Tasks',
-        ),
+        title: Column(
+          children: [
+            Text('Task editor'),
+          ],
+        )
       ),
       content: Column(
         children: [

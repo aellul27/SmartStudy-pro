@@ -67,6 +67,7 @@ class TimetableViewer extends StatelessWidget {
                         child: Text(
                           DateFormat('E\nMMM d').format(d),
                           textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white),
                         ),
                       ),
                     ),
