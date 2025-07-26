@@ -2,7 +2,7 @@ import '../database.dart';
 import 'package:flutter/widgets.dart';
 import 'package:drift/drift.dart';
 
-/// Inserts a new EventItem into the local drift database.
+/// Removes a new EventItem from the local drift database.
 Future<void> removeEvent({
   required int id,
 }) async {

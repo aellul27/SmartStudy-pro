@@ -54,7 +54,6 @@ class AppDatabase extends _$AppDatabase {
       ),
     );
   }
-  // ...existing code...
 }
 
 // Singleton instance for AppDatabase

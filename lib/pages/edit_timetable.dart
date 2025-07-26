@@ -1,5 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:intl/intl.dart';
+import 'package:smartstudy_pro/widgets/event/copyweek.dart';
 import 'package:smartstudy_pro/widgets/event/removeevent.dart';
 import '../widgets/event/addevent.dart';
 import '../widgets/event/updateevent.dart';
@@ -26,6 +27,7 @@ class _EditTimetableState extends State<EditTimetablePage> {
 
   // ── now a flat list of Events ──
   final List<EventItem> _events = [];
+  final List<EventItem> _copiedEvents = [];
 
   @override
   void initState() {
@@ -65,6 +67,55 @@ class _EditTimetableState extends State<EditTimetablePage> {
         )
       ;
     });
+  }
+
+  Future<void> _copyWeek() async {
+    _copiedEvents.clear();
+    for (var ev in _events) {
+      _copiedEvents.add(ev);
+    }
+  }
+
+  Future<void> _pasteWeek() async {
+    final confirmed = await RemoveEventDialog.show(context, "All Events This Week");
+    if (confirmed == true) {
+      DateTime copiedWeekStart;
+      if (_copiedEvents.isNotEmpty) {
+        final firstEv = _copiedEvents.first;
+        // ISO week starts Monday
+        copiedWeekStart = firstEv.startTime.subtract(Duration(days: firstEv.startTime.weekday - 1));
+      } else {
+        return;
+      }
+      final confirmed2 = await CopyWeekDialog.show(context, List.generate(7, (i) => copiedWeekStart.add(Duration(days: i))));
+      if (confirmed2 == true) {
+        for (var ev in _events) {
+          await removeEvent(id: ev.id);
+        }
+        for (var ev in _copiedEvents) {
+          await addEvent(
+            title: ev.title,
+            eventType: ev.eventType,
+            startTime: DateTime(
+              _weekStart.year,
+              _weekStart.month,
+              _weekStart.day + ev.startTime.weekday - 1,
+              ev.startTime.hour,
+              ev.startTime.minute,
+            ),
+            endTime: DateTime(
+              _weekStart.year,
+              _weekStart.month,
+              _weekStart.day + ev.endTime.weekday - 1,
+              ev.endTime.hour,
+              ev.endTime.minute,
+            ),
+            color: '#${ev.color.toARGB32().toRadixString(16).padLeft(8, '0')}',
+          );
+        }
+        _loadWeek();
+      }
+    }
   }
 
   // hex "#RRGGBB" or "#AARRGGBB"
@@ -149,6 +200,10 @@ class _EditTimetableState extends State<EditTimetablePage> {
           IconButton(icon: const Icon(FluentIcons.chevron_left), onPressed: () => _shiftWeek(-7)),
           IconButton(icon: const Icon(FluentIcons.chevron_right), onPressed: () => _shiftWeek(7)),
           IconButton(icon: const Icon(FluentIcons.calculator_multiply), onPressed: () => _removeEvents()),
+          IconButton(icon: const Icon(FluentIcons.copy), onPressed: () => _copyWeek()),
+          Text("Copy week"),
+          IconButton(icon: const Icon(FluentIcons.paste), onPressed: () => _pasteWeek()),
+          Text("Paste week")
         ]),
         title: Column(
           children: [
