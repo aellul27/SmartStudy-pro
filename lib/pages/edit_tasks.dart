@@ -21,6 +21,7 @@ class _EditTaskState extends State<EditTasksPage> {
   List _subjects = [];
   String _selectedsubject = "All";
   bool toGetCompleted = false;
+  String _searchQuery = ""; 
   @override
   void initState() {
     super.initState();
@@ -131,19 +132,29 @@ class _EditTaskState extends State<EditTasksPage> {
               ),
             ],
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: TextBox(
+              placeholder: "Search tasks...",
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+            ),
+          ),
           Expanded(
             child: ListView.builder(
               itemCount: _tasks.length,
               itemBuilder: (context, index) {
-                final filteredTasks = _selectedsubject == "All"
-                  ? _tasks
-                  : _tasks.where((t) => t.subject == _selectedsubject).toList();
+                final filteredTasks = _tasks
+                  .where((t) => (_selectedsubject == "All" || t.subject == _selectedsubject))
+                  .where((t) => t.title.toLowerCase().contains(_searchQuery.toLowerCase()))
+                  .toList();
                 if (index >= filteredTasks.length) return const SizedBox.shrink();
                 final taskiter = filteredTasks[index];
                 Color getPriorityColor(int priority) {
-                  // Clamp priority between 1 and 10
                   final p = priority.clamp(1, 10);
-                  // Interpolate from red (1) to blue (10)
                   return Color.lerp(Colors.red, Colors.blue, (p - 1) / 9)!;
                 }
                 return ListTile.selectable(
