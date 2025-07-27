@@ -151,10 +151,10 @@ class _EditScheduleState extends State<EditSchedulePage> {
 
 
   Future<void> _autoAssign() async {
-    final confirmed = await AssignTasksDialog.show(context);
-    if (confirmed == true) {
+    final double? ratio = await AssignTasksDialog.show(context);
+    if (ratio != null) {
       try {
-        await autoAssignStudyTime(_weekStart);
+        await autoAssignStudyTime(_weekStart, ratio);
       } catch (e) {
         await showDialog(
           context: context,

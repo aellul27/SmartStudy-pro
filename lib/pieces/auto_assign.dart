@@ -5,12 +5,11 @@ import '../database/tasks/get_tasks.dart';
 import '../database/events/add_events.dart';
 
 /// Adjust this to balance due date vs priority (1 = only priority, 10 = only due date)
-double dueDateWeight = 5.0; // 1-10, can be set from UI
 
 /// Automatically assigns study_time events to tasks based on priority and due date.
 /// Splits events if needed to fit required time and due dates.
 /// Call this function and then reload your week/events.
-Future<void> autoAssignStudyTime(DateTime weekStart) async {
+Future<void> autoAssignStudyTime(DateTime weekStart, double dueDateWeight) async {
   // Get all events from today onwards (not just the week)
   final now = DateTime.now();
   final events = await getAllEvents();
