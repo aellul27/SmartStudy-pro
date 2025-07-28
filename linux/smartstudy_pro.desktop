@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=SmartStudy Pro
+Comment=Intelligent Timetable planning app.
+Exec=./smartstudy_pro
+Icon=./data/flutter_assets/assets/images/icon.png
+Terminal=false
+Type=Application
+Categories=Education;
